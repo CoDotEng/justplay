@@ -17,7 +17,6 @@
 
         h1, h2, h3, .brand { font-family: 'Orbitron', sans-serif; }
         
-        /* Navbar */
         nav { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 20px 50px; background: rgba(5, 5, 5, 0.8); 
@@ -31,18 +30,15 @@
         .nav-links a:hover, .nav-links a.active { color: #00e5ff; text-shadow: 0 0 8px #00e5ff; }
         .hamburger { display: none; font-size: 2rem; color: #00e5ff; cursor: pointer; background: none; border: none; }
 
-        /* Page Layout */
         .page-container { margin-top: 120px; flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 0 20px; margin-bottom: 50px; }
         .glow-title { text-shadow: 0 0 15px #b026ff, 0 0 30px #b026ff; font-size: 3rem; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 30px; text-align: center; }
 
-        /* The Boxes */
         .glass-panel {
             background: rgba(15, 15, 15, 0.7); border: 1px solid rgba(0, 229, 255, 0.3);
             padding: 40px; border-radius: 8px; width: 100%; max-width: 500px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.8); text-align: center; transition: 0.3s;
         }
         
-        /* Form Inputs */
         .input-group { margin-bottom: 20px; text-align: left; }
         label { display: block; color: #00e5ff; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
         input, select {
@@ -51,16 +47,12 @@
             font-size: 1.1rem; font-family: 'Rajdhani', sans-serif; transition: 0.3s;
         }
         input:focus, select:focus { outline: none; border-color: #b026ff; box-shadow: 0 0 10px rgba(176, 38, 255, 0.3); }
-        
-        /* Disabled Input Style */
-        select:disabled { opacity: 0.5; cursor: not-allowed; }
+        select:disabled, input:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Buttons */
         .btn-google {
             background: #fff; color: #050505; border: none; padding: 15px; width: 100%;
             font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px;
-            display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s;
-            margin-top: 15px;
+            display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s; margin-top: 15px;
         }
         .btn-google:hover { background: #ccc; }
         
@@ -77,16 +69,17 @@
             text-transform: uppercase; cursor: pointer; border-radius: 4px; 
             box-shadow: 0 0 10px #00e5ff inset; transition: 0.3s ease-in-out; letter-spacing: 1px; margin-top: 10px;
         }
-        .btn-neon:hover { background: #00e5ff; color: #050505; box-shadow: 0 0 20px #00e5ff, 0 0 40px #00e5ff; }
+        .btn-neon:hover:not(:disabled) { background: #00e5ff; color: #050505; box-shadow: 0 0 20px #00e5ff, 0 0 40px #00e5ff; }
+        .btn-neon:disabled { border-color: #555; color: #555; box-shadow: none; cursor: not-allowed; }
 
         .divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: #555; }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #333; }
         .divider:not(:empty)::before { margin-right: .25em; }
         .divider:not(:empty)::after { margin-left: .25em; }
 
-        /* Hide logic */
         #booking-section { display: none; }
         #user-info { color: #aaa; margin-bottom: 20px; font-size: 1rem; }
+        #status-display { margin-bottom: 15px; font-size: 1.2rem; font-weight: bold; min-height: 28px; transition: 0.3s; }
 
         footer { text-align: center; padding: 30px; background: #020202; color: #555; font-size: 0.9rem; margin-top: auto; border-top: 1px solid #111; }
 
@@ -144,30 +137,30 @@
             
             <div class="input-group">
                 <label>Select Arsenal</label>
-                <select id="console-type" required>
+                <select id="console-type" class="check-trigger" required>
                     <option value="" disabled selected>Select a station...</option>
-                    <option value="PC">High-End PC (Rs. 110/hr)</option>
-                    <option value="PS5_42">PS5 - 42" Display (Rs. 120/hr)</option>
-                    <option value="PS5_65">PS5 MAX - 65" Display (Rs. 130/hr)</option>
-                    <option value="SIM">Sim Racing Rig (Rs. 150/hr)</option>
+                    <option value="PC">High-End PC (2 Available)</option>
+                    <option value="PS5_42">PS5 - 42" Display (2 Available)</option>
+                    <option value="PS5_65">PS5 MAX - 65" Display (2 Available)</option>
+                    <option value="SIM">Sim Racing Rig (2 Available)</option>
                 </select>
             </div>
 
             <div class="input-group">
                 <label>Date</label>
-                <input type="date" id="booking-date" required>
+                <input type="date" id="booking-date" class="check-trigger" required>
             </div>
 
             <div class="input-group">
                 <label>Arrival Time</label>
-                <select id="booking-time" disabled required>
+                <select id="booking-time" class="check-trigger" disabled required>
                     <option value="" disabled selected>Select a date first...</option>
                 </select>
             </div>
 
             <div class="input-group">
                 <label>Duration</label>
-                <select id="booking-duration" required>
+                <select id="booking-duration" class="check-trigger" required>
                     <option value="" disabled selected>How long are you playing?</option>
                     <option value="0.5">30 Minutes</option>
                     <option value="1">1 Hour</option>
@@ -184,9 +177,11 @@
                 <input type="tel" id="booking-phone" placeholder="e.g. 9876543210">
             </div>
 
-            <button class="btn-neon" id="submit-booking">Confirm Booking</button>
-        </div>
+            <!-- LIVE STATUS DISPLAY -->
+            <div id="status-display"></div>
 
+            <button class="btn-neon" id="submit-booking" disabled>Confirm Booking</button>
+        </div>
     </div>
 
     <footer><p>Engineered by CODOT</p></footer>
@@ -194,59 +189,42 @@
     <script>
         function toggleMenu() { document.getElementById("navLinks").classList.toggle("active"); }
 
-        // Block past dates in the date picker
+        // Block past dates
         const today = new Date().toISOString().split('T')[0];
-        document.getElementById('booking-date').setAttribute('min', today);
-
-        // Smart Time Generator Logic
         const dateInput = document.getElementById('booking-date');
         const timeSelect = document.getElementById('booking-time');
+        dateInput.setAttribute('min', today);
 
+        // Smart Time Generator
         dateInput.addEventListener('change', (e) => {
             const selectedDate = new Date(e.target.value);
-            const day = selectedDate.getDay(); // 0 is Sunday, 1-6 is Mon-Sat
-            
+            const day = selectedDate.getDay();
             timeSelect.innerHTML = '<option value="" disabled selected>Select an arrival time...</option>';
             timeSelect.disabled = false;
-
-            // Set specific hours based on the day of the week
             let startHour = (day === 0) ? 10 : 11;
             let startMin = (day === 0) ? 30 : 0;
-            let endHour = (day === 0) ? 21 : 20; // 9:00 PM Sunday, 8:30 PM Mon-Sat
+            let endHour = (day === 0) ? 21 : 20;
             let endMin = (day === 0) ? 0 : 30;
-
-            let curH = startHour;
-            let curM = startMin;
-
-            // Generate 30-minute intervals until closing time
+            let curH = startHour, curM = startMin;
             while(curH < endHour || (curH === endHour && curM <= endMin)) {
                 let ampm = curH >= 12 ? 'PM' : 'AM';
                 let dispH = curH > 12 ? curH - 12 : (curH === 0 ? 12 : curH);
                 let dispM = curM === 0 ? '00' : '30';
                 let timeStr = `${dispH}:${dispM} ${ampm}`;
-                
-                let valH = curH.toString().padStart(2, '0');
-                let valStr = `${valH}:${dispM}`;
-                
+                let valStr = `${curH.toString().padStart(2, '0')}:${dispM}`;
                 let option = document.createElement('option');
-                option.value = valStr;
-                option.text = timeStr;
+                option.value = valStr; option.text = timeStr;
                 timeSelect.appendChild(option);
-                
-                // Increment by 30 mins
-                curM += 30;
-                if(curM >= 60) {
-                    curM = 0;
-                    curH++;
-                }
+                curM += 30; if(curM >= 60) { curM = 0; curH++; }
             }
         });
     </script>
 
-    <!-- FIREBASE MODULAR SDK INTEGRATION -->
+    <!-- FIREBASE INTEGRATION WITH FIRESTORE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
   apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
@@ -260,45 +238,29 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // UI Elements
         const authSection = document.getElementById('auth-section');
         const bookingSection = document.getElementById('booking-section');
         const displayEmail = document.getElementById('display-email');
-        const emailInput = document.getElementById('auth-email');
-        const passInput = document.getElementById('auth-password');
+        const submitBtn = document.getElementById('submit-booking');
+        const statusDisplay = document.getElementById('status-display');
 
-        // Google Login
-        document.getElementById('google-login-btn').addEventListener('click', () => {
-            signInWithPopup(auth, provider).catch(error => alert("Google Login Error: " + error.message));
-        });
+        let currentUser = null;
 
-        // Email Sign Up
+        // Auth Listeners
+        document.getElementById('google-login-btn').addEventListener('click', () => signInWithPopup(auth, provider));
         document.getElementById('btn-signup').addEventListener('click', () => {
-            const email = emailInput.value;
-            const password = passInput.value;
-            if(!email || !password) return alert("Please enter email and password.");
-            createUserWithEmailAndPassword(auth, email, password)
-            .catch(error => alert(error.message));
+            createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(err => alert(err.message));
         });
-
-        // Email Log In
         document.getElementById('btn-login').addEventListener('click', () => {
-            const email = emailInput.value;
-            const password = passInput.value;
-            if(!email || !password) return alert("Please enter email and password.");
-            signInWithEmailAndPassword(auth, email, password)
-            .catch(error => alert("Login failed. Check your credentials."));
+            signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(err => alert("Login failed."));
         });
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-        // Log Out
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            signOut(auth);
-        });
-
-        // Listen for Login State
         onAuthStateChanged(auth, (user) => {
+            currentUser = user;
             if (user) {
                 authSection.style.display = 'none';
                 bookingSection.style.display = 'block';
@@ -306,8 +268,88 @@
             } else {
                 authSection.style.display = 'block';
                 bookingSection.style.display = 'none';
-                emailInput.value = '';
-                passInput.value = '';
+            }
+        });
+
+        // The Overlap Engine (Live Availability Checker)
+        const checkTriggers = document.querySelectorAll('.check-trigger');
+        
+        async function checkAvailability() {
+            const consoleVal = document.getElementById('console-type').value;
+            const dateVal = document.getElementById('booking-date').value;
+            const timeVal = document.getElementById('booking-time').value;
+            const durationVal = document.getElementById('booking-duration').value;
+
+            // Only check if all fields are filled
+            if(!consoleVal || !dateVal || !timeVal || !durationVal) return;
+
+            statusDisplay.innerHTML = '<span style="color: #aaa;">Checking availability...</span>';
+            submitBtn.disabled = true;
+
+            // Convert requested time to math
+            const [hr, min] = timeVal.split(':');
+            const reqStart = parseInt(hr) + (parseInt(min) / 60);
+            const reqDuration = parseFloat(durationVal);
+            const reqEnd = reqStart + reqDuration;
+
+            // Ask database for overlapping bookings
+            const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
+            const querySnapshot = await getDocs(q);
+            
+            let overlaps = 0;
+            const MAX_CAPACITY = 2; // Since he has 2 of every setup
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                // Check if times intersect
+                if(reqStart < data.endTime && reqEnd > data.startTime) {
+                    overlaps++;
+                }
+            });
+
+            const available = MAX_CAPACITY - overlaps;
+
+            if (available > 0) {
+                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${available}/${MAX_CAPACITY} Slots Available</span>`;
+                submitBtn.disabled = false;
+            } else {
+                statusDisplay.innerHTML = `<span style="color: #ff0000; text-shadow: 0 0 10px #ff0000;">🔴 Fully Booked for this time</span>`;
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Fire check every time a user changes a dropdown
+        checkTriggers.forEach(trigger => trigger.addEventListener('change', checkAvailability));
+
+        // Submit Booking to Firestore
+        submitBtn.addEventListener('click', async () => {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Securing Slot...";
+            
+            const timeVal = document.getElementById('booking-time').value;
+            const [hr, min] = timeVal.split(':');
+            const reqStart = parseInt(hr) + (parseInt(min) / 60);
+            
+            try {
+                await addDoc(collection(db, "bookings"), {
+                    userEmail: currentUser.email,
+                    console: document.getElementById('console-type').value,
+                    date: document.getElementById('booking-date').value,
+                    timeString: timeVal,
+                    startTime: reqStart,
+                    duration: parseFloat(document.getElementById('booking-duration').value),
+                    endTime: reqStart + parseFloat(document.getElementById('booking-duration').value),
+                    phone: document.getElementById('booking-phone').value || "None",
+                    timestamp: new Date()
+                });
+                
+                alert("Booking Confirmed! See you at Just Play.");
+                window.location.reload(); // Refresh to reset form
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert("Error securing slot. Please try again.");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Confirm Booking";
             }
         });
     </script>
