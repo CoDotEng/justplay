@@ -1,17 +1,17 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- PWA Meta Tags (Makes it act like a native phone app) -->
+    <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#050505">
-    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/GitHub_Invertocat_Logo.svg/1024px-GitHub_Invertocat_Logo.svg.png"> <!-- Placeholder icon -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="/icon.png">
 
     <title>Just Play | Admin Dashboard</title>
-  <link rel="manifest" href="manifest.json">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap');
         
@@ -39,8 +39,21 @@
         .login-box { background: rgba(20,20,20,0.8); border: 1px solid #333; padding: 40px; border-radius: 8px; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 0 20px #000; }
         .input-group { margin-bottom: 15px; }
         input { width: 100%; padding: 12px; background: #0a0a0a; border: 1px solid #444; color: #fff; border-radius: 4px; font-family: 'Rajdhani'; font-size: 1.1rem; }
-        .btn-neon { background: transparent; color: #00e5ff; border: 2px solid #00e5ff; padding: 12px; width: 100%; font-size: 1.2rem; font-weight: bold; cursor: pointer; border-radius: 4px; transition: 0.3s; margin-top: 10px; }
-        .btn-neon:hover { background: #00e5ff; color: #000; box-shadow: 0 0 15px #00e5ff; }
+        
+        .btn-auth { background: #b026ff; color: #fff; border: none; padding: 12px; width: 100%; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; transition: 0.3s; letter-spacing: 1px; }
+        .btn-auth:hover { background: #901ad6; box-shadow: 0 0 15px #b026ff; }
+
+        .btn-google {
+            background: #fff; color: #050505; border: none; padding: 12px; width: 100%;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 4px;
+            display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.3s; margin-top: 10px;
+        }
+        .btn-google:hover { background: #ccc; }
+
+        .divider { display: flex; align-items: center; text-align: center; margin: 15px 0; color: #555; font-size: 0.9rem; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #333; }
+        .divider:not(:empty)::before { margin-right: .25em; }
+        .divider:not(:empty)::after { margin-left: .25em; }
 
         /* Dashboard Screen */
         #dashboard-screen { display: none; padding: 20px; max-width: 800px; margin: 0 auto; width: 100%; }
@@ -87,14 +100,23 @@
     <div id="login-screen">
         <div class="login-box">
             <h2 style="margin-bottom: 20px; color: #b026ff;">COMMAND CENTER</h2>
+            
+            <button class="btn-google" id="google-admin-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign In with Google
+            </button>
+
+            <div class="divider">OR USE PASSWORD</div>
+
             <div class="input-group">
-                <input type="email" id="admin-email" placeholder="Admin Email" required>
+                <input type="email" id="admin-email" placeholder="Admin Email">
             </div>
             <div class="input-group">
-                <input type="password" id="admin-password" placeholder="Password" required>
+                <input type="password" id="admin-password" placeholder="Password">
             </div>
-            <button class="btn-neon" id="btn-login">Access Systems</button>
-            <p id="login-error" style="color: #ff0055; margin-top: 15px; display: none;"></p>
+            <button class="btn-auth" id="btn-login">Log In</button>
+
+            <p id="login-error" style="color: #ff0055; margin-top: 15px; display: none; font-weight: bold;"></p>
         </div>
     </div>
 
@@ -113,24 +135,25 @@
     <!-- FIREBASE SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+        // ⚠️ REPLACE THIS WITH YOUR REAL FIREBASE KEYS ⚠️
         const firebaseConfig = {
-  apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
-  authDomain: "justplay-booking-engine.firebaseapp.com",
-  projectId: "justplay-booking-engine",
-  storageBucket: "justplay-booking-engine.firebasestorage.app",
-  messagingSenderId: "275838911544",
-  appId: "1:275838911544:web:c23d5f7054fb4f9b5592cd"
-};
-
+            apiKey: "AIzaSyB-YOUR-API-KEY",
+            authDomain: "justplay-your-app.firebaseapp.com",
+            projectId: "justplay-your-app",
+            storageBucket: "justplay-your-app.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-        // ⚠️ SET THE OWNER'S EMAIL HERE ⚠️
+        // 🔒 DESIGNATED ADMIN EMAIL
         const ADMIN_EMAIL = "ayiraditya09@gmail.com"; 
 
         const loginScreen = document.getElementById('login-screen');
@@ -139,11 +162,21 @@
         const errorMsg = document.getElementById('login-error');
         const bookingsList = document.getElementById('bookings-list');
 
-        // Admin Login Logic
+        // Google Sign-In
+        document.getElementById('google-admin-btn').addEventListener('click', () => {
+            errorMsg.style.display = 'none';
+            signInWithPopup(auth, provider).catch(err => {
+                errorMsg.innerText = "Google Sign-In Failed: " + err.message;
+                errorMsg.style.display = "block";
+            });
+        });
+
+        // Email / Password Login
         document.getElementById('btn-login').addEventListener('click', () => {
             const email = document.getElementById('admin-email').value;
             const password = document.getElementById('admin-password').value;
             
+            errorMsg.style.display = 'none';
             signInWithEmailAndPassword(auth, email, password).catch(err => {
                 errorMsg.innerText = "Access Denied: Invalid Credentials";
                 errorMsg.style.display = "block";
@@ -152,18 +185,19 @@
 
         logoutBtn.addEventListener('click', () => signOut(auth));
 
-        // State Change Listener
+        // State Change Listener & Gatekeeper
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                if (user.email === ADMIN_EMAIL) {
+                if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
                     loginScreen.style.display = 'none';
                     dashboardScreen.style.display = 'block';
                     logoutBtn.style.display = 'block';
-                    fetchBookings(); // Load data
+                    errorMsg.style.display = 'none';
+                    fetchBookings();
                 } else {
-                    // Kick out non-admins
+                    // Kick out non-admin Google accounts
                     signOut(auth);
-                    errorMsg.innerText = "Access Denied: Unauthorized Clearance";
+                    errorMsg.innerText = `Access Denied: ${user.email} is not authorized.`;
                     errorMsg.style.display = "block";
                 }
             } else {
@@ -173,7 +207,6 @@
             }
         });
 
-        // Dictionary to make console IDs look nice
         const consoleNames = {
             "PC": "PC Setup",
             "PS5_42": "PS5 (42\")",
@@ -181,7 +214,7 @@
             "SIM": "Sim Racing Rig"
         };
 
-        // Fetch and Draw Bookings
+        // Fetch and Render Bookings
         async function fetchBookings() {
             bookingsList.innerHTML = '<div class="empty-state">Syncing secure connection...</div>';
             
@@ -194,41 +227,38 @@
                 });
 
                 // Sort by timestamp (newest first)
-                bookings.sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis());
+                bookings.sort((a, b) => (b.timestamp?.toMillis?.() || 0) - (a.timestamp?.toMillis?.() || 0));
 
                 if (bookings.length === 0) {
                     bookingsList.innerHTML = '<div class="empty-state">No bookings found in the database.</div>';
                     return;
                 }
 
-                bookingsList.innerHTML = ''; // Clear container
+                bookingsList.innerHTML = '';
 
                 bookings.forEach(b => {
                     const card = document.createElement('div');
                     card.className = `card ${b.console}`;
                     
-                    // Format Date nicely
                     const dateObj = new Date(b.date);
                     const niceDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-                    // WhatsApp button logic
                     let waButton = '';
                     if (b.phone && b.phone !== "None" && b.phone.length >= 10) {
-                        // Strip non-numbers from phone
                         let cleanPhone = b.phone.replace(/\D/g,'');
-                        // Assume India (+91) if 10 digits
                         if(cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
                         waButton = `<a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-wa">WhatsApp</a>`;
                     }
 
                     card.innerHTML = `
                         <div class="card-header">
-                            <div class="customer-name">${b.name}</div>
+                            <div class="customer-name">${b.name || 'Anonymous Player'}</div>
                             <div class="console-badge">${consoleNames[b.console] || b.console}</div>
                         </div>
                         <div class="card-details">
                             Date: <span class="highlight">${niceDate}</span><br>
                             Time: <span class="highlight">${b.timeString}</span> (${b.duration} Hours)<br>
+                            Account: ${b.userEmail}<br>
                             Phone: ${b.phone}
                         </div>
                         <div class="card-actions">
@@ -241,18 +271,17 @@
 
             } catch (error) {
                 console.error("Error fetching bookings: ", error);
-                bookingsList.innerHTML = '<div class="empty-state" style="color:red;">Error fetching backend data.</div>';
+                bookingsList.innerHTML = '<div class="empty-state" style="color:#ff0055;">Error fetching backend data.</div>';
             }
         }
 
         document.getElementById('btn-refresh').addEventListener('click', fetchBookings);
 
-        // Make delete function globally accessible to the HTML buttons
         window.deleteBooking = async function(id) {
             if(confirm("Are you sure you want to delete this booking? This will free up the slot immediately.")) {
                 try {
                     await deleteDoc(doc(db, "bookings", id));
-                    fetchBookings(); // Refresh list automatically
+                    fetchBookings();
                 } catch (e) {
                     alert("Error deleting slot.");
                     console.error(e);
@@ -260,17 +289,16 @@
             }
         }
     </script>
-  <script>
-        // Register Service Worker for PWA Native Install
+
+    <!-- Service Worker Registration -->
+    <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Service Worker Registered!'))
+                    .then(() => console.log('PWA Service Worker Active'))
                     .catch(err => console.error('Service Worker Error: ', err));
             });
         }
     </script>
-</body>
-</html>
 </body>
 </html>
