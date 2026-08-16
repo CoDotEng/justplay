@@ -108,8 +108,8 @@
 
         <!-- AUTHENTICATION SECTION -->
         <div class="glass-panel" id="auth-section">
-            <h2 style="margin-bottom: 10px; color: #fff;">IDENTIFICATION REQUIRED</h2>
-            <p style="color: #aaa; margin-bottom: 25px;">Sign in to view availability.</p>
+            <h2 id="auth-title" style="margin-bottom: 10px; color: #fff;">IDENTIFICATION REQUIRED</h2>
+            <p id="auth-subtitle" style="color: #aaa; margin-bottom: 25px;">Sign in to view availability.</p>
             
             <div class="input-group">
                 <input type="email" id="auth-email" placeholder="Email Address" required>
@@ -118,10 +118,12 @@
                 <input type="password" id="auth-password" placeholder="Password" required>
             </div>
             
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-auth" id="btn-login">Log In</button>
-                <button class="btn-auth" id="btn-signup" style="background: transparent; border: 1px solid #b026ff;">Sign Up</button>
-            </div>
+            <button class="btn-auth" id="btn-primary-auth">Log In</button>
+            
+            <p style="margin-top: 15px; color: #aaa; font-size: 0.95rem;">
+                <span id="auth-toggle-text">Don't have an account?</span> 
+                <a href="#" id="auth-toggle-link" style="color: #00e5ff; text-decoration: none; font-weight: bold;">Create Account</a>
+            </p>
 
             <div class="divider">OR</div>
 
@@ -189,33 +191,63 @@
     <script>
         function toggleMenu() { document.getElementById("navLinks").classList.toggle("active"); }
 
-        // Block past dates
-        const today = new Date().toISOString().split('T')[0];
+        // Block past dates using local machine time
+        const now = new Date();
+        const todayString = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         const dateInput = document.getElementById('booking-date');
         const timeSelect = document.getElementById('booking-time');
-        dateInput.setAttribute('min', today);
+        dateInput.setAttribute('min', todayString);
 
-        // Smart Time Generator
+        // Smart Time Generator (with past-time blocking)
         dateInput.addEventListener('change', (e) => {
-            const selectedDate = new Date(e.target.value);
+            const selectedDateString = e.target.value;
+            const selectedDate = new Date(selectedDateString);
             const day = selectedDate.getDay();
+            
             timeSelect.innerHTML = '<option value="" disabled selected>Select an arrival time...</option>';
             timeSelect.disabled = false;
+            
             let startHour = (day === 0) ? 10 : 11;
             let startMin = (day === 0) ? 30 : 0;
             let endHour = (day === 0) ? 21 : 20;
             let endMin = (day === 0) ? 0 : 30;
+            
             let curH = startHour, curM = startMin;
+            
+            // Re-fetch current time in case they left the tab open
+            const currentNow = new Date();
+            const isToday = selectedDateString === todayString;
+            const currentHour = currentNow.getHours();
+            const currentMin = currentNow.getMinutes();
+
+            let slotsAdded = 0;
+
             while(curH < endHour || (curH === endHour && curM <= endMin)) {
+                // Time Travel Lock
+                if (isToday) {
+                    if (curH < currentHour || (curH === currentHour && curM <= currentMin)) {
+                        curM += 30; if(curM >= 60) { curM = 0; curH++; }
+                        continue;
+                    }
+                }
+
                 let ampm = curH >= 12 ? 'PM' : 'AM';
                 let dispH = curH > 12 ? curH - 12 : (curH === 0 ? 12 : curH);
                 let dispM = curM === 0 ? '00' : '30';
                 let timeStr = `${dispH}:${dispM} ${ampm}`;
                 let valStr = `${curH.toString().padStart(2, '0')}:${dispM}`;
+                
                 let option = document.createElement('option');
                 option.value = valStr; option.text = timeStr;
                 timeSelect.appendChild(option);
+                slotsAdded++;
+
                 curM += 30; if(curM >= 60) { curM = 0; curH++; }
+            }
+
+            if(slotsAdded === 0) {
+                timeSelect.innerHTML = '<option value="" disabled selected>No slots left for today.</option>';
+                timeSelect.disabled = true;
             }
         });
     </script>
@@ -226,7 +258,7 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
   authDomain: "justplay-booking-engine.firebaseapp.com",
   projectId: "justplay-booking-engine",
@@ -234,7 +266,6 @@
   messagingSenderId: "275838911544",
   appId: "1:275838911544:web:c23d5f7054fb4f9b5592cd"
 };
-
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -249,14 +280,54 @@
 
         let currentUser = null;
 
+        // Auth UI Toggle Logic
+        let isLoginMode = true;
+        const authTitle = document.getElementById('auth-title');
+        const authSubtitle = document.getElementById('auth-subtitle');
+        const primaryAuthBtn = document.getElementById('btn-primary-auth');
+        const toggleText = document.getElementById('auth-toggle-text');
+        const toggleLink = document.getElementById('auth-toggle-link');
+
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            if(isLoginMode) {
+                authTitle.innerText = "IDENTIFICATION REQUIRED";
+                authSubtitle.innerText = "Sign in to view availability.";
+                primaryAuthBtn.innerText = "Log In";
+                toggleText.innerText = "Don't have an account?";
+                toggleLink.innerText = "Create Account";
+            } else {
+                authTitle.innerText = "CREATE ACCOUNT";
+                authSubtitle.innerText = "Register to secure your slots.";
+                primaryAuthBtn.innerText = "Sign Up";
+                toggleText.innerText = "Already have an account?";
+                toggleLink.innerText = "Log In";
+            }
+        });
+
         // Auth Listeners
         document.getElementById('google-login-btn').addEventListener('click', () => signInWithPopup(auth, provider));
-        document.getElementById('btn-signup').addEventListener('click', () => {
-            createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(err => alert(err.message));
+        
+        primaryAuthBtn.addEventListener('click', () => {
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            if(!email || !password) return alert("Please enter email and password.");
+            
+            primaryAuthBtn.disabled = true;
+            if(isLoginMode) {
+                signInWithEmailAndPassword(auth, email, password).catch(err => {
+                    alert("Login failed. Check your credentials.");
+                    primaryAuthBtn.disabled = false;
+                });
+            } else {
+                createUserWithEmailAndPassword(auth, email, password).catch(err => {
+                    alert(err.message);
+                    primaryAuthBtn.disabled = false;
+                });
+            }
         });
-        document.getElementById('btn-login').addEventListener('click', () => {
-            signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(err => alert("Login failed."));
-        });
+
         document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
         onAuthStateChanged(auth, (user) => {
@@ -265,6 +336,7 @@
                 authSection.style.display = 'none';
                 bookingSection.style.display = 'block';
                 displayEmail.innerText = user.email;
+                primaryAuthBtn.disabled = false;
             } else {
                 authSection.style.display = 'block';
                 bookingSection.style.display = 'none';
@@ -280,28 +352,24 @@
             const timeVal = document.getElementById('booking-time').value;
             const durationVal = document.getElementById('booking-duration').value;
 
-            // Only check if all fields are filled
             if(!consoleVal || !dateVal || !timeVal || !durationVal) return;
 
             statusDisplay.innerHTML = '<span style="color: #aaa;">Checking availability...</span>';
             submitBtn.disabled = true;
 
-            // Convert requested time to math
             const [hr, min] = timeVal.split(':');
             const reqStart = parseInt(hr) + (parseInt(min) / 60);
             const reqDuration = parseFloat(durationVal);
             const reqEnd = reqStart + reqDuration;
 
-            // Ask database for overlapping bookings
             const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
             const querySnapshot = await getDocs(q);
             
             let overlaps = 0;
-            const MAX_CAPACITY = 2; // Since he has 2 of every setup
+            const MAX_CAPACITY = 2; 
 
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                // Check if times intersect
                 if(reqStart < data.endTime && reqEnd > data.startTime) {
                     overlaps++;
                 }
@@ -318,7 +386,6 @@
             }
         }
 
-        // Fire check every time a user changes a dropdown
         checkTriggers.forEach(trigger => trigger.addEventListener('change', checkAvailability));
 
         // Submit Booking to Firestore
@@ -344,7 +411,7 @@
                 });
                 
                 alert("Booking Confirmed! See you at Just Play.");
-                window.location.reload(); // Refresh to reset form
+                window.location.reload(); 
             } catch (e) {
                 console.error("Error adding document: ", e);
                 alert("Error securing slot. Please try again.");
