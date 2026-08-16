@@ -215,12 +215,12 @@ const firebaseConfig = {
         // 🔒 DESIGNATED ADMIN EMAIL
         const ADMIN_EMAIL = "ayiraditya09@gmail.com"; 
 
-        // 💰 AUTOMATED RATE CARD (Change these to match your exact screenshot)
+        // 💰 UPDATED RATE CARD
         const RATE_CARD = {
-            "PC": 100,        // ₹100 per hour
-            "PS5_42": 150,    // ₹150 per hour
-            "PS5_65": 200,    // ₹200 per hour
-            "SIM": 300        // ₹300 per hour
+            "PC": 110,        // ₹110 per hour
+            "PS5_42": 120,    // ₹120 per hour
+            "PS5_65": 130,    // ₹130 per hour
+            "SIM": 150        // ₹150 per hour
         };
 
         const loginScreen = document.getElementById('login-screen');
@@ -229,6 +229,8 @@ const firebaseConfig = {
         const errorMsg = document.getElementById('login-error');
         const bookingsList = document.getElementById('bookings-list');
         const modal = document.getElementById('walkin-modal');
+        const dateInput = document.getElementById('w-date');
+        const timeInput = document.getElementById('w-time');
 
         // Google Sign-In
         document.getElementById('google-admin-btn').addEventListener('click', () => {
@@ -365,11 +367,39 @@ const firebaseConfig = {
             }
         }
 
-        // --- WALK-IN MODAL LOGIC ---
+        // --- WALK-IN MODAL LOGIC & TIME-TRAVEL BLOCK ---
+
+        // Function to dynamically lock past times for today
+        function enforceTimeLimit() {
+            const now = new Date();
+            // Format YYYY-MM-DD locally to avoid UTC offset issues
+            const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            
+            if (dateInput.value === todayStr) {
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                timeInput.min = `${hours}:${minutes}`;
+            } else {
+                timeInput.min = ""; // No restrictions for future dates
+            }
+        }
+
+        dateInput.addEventListener('change', enforceTimeLimit);
+
         document.getElementById('btn-open-modal').addEventListener('click', () => {
-            // Pre-fill today's date
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('w-date').value = today;
+            const now = new Date();
+            const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            
+            // Block past dates physically in the calendar
+            dateInput.min = todayStr;
+            dateInput.value = todayStr;
+            
+            // Auto-fill current time so he doesn't have to scroll
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            timeInput.value = `${hours}:${minutes}`;
+            
+            enforceTimeLimit();
             modal.style.display = 'flex';
         });
 
@@ -379,6 +409,13 @@ const firebaseConfig = {
 
         document.getElementById('walkin-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // The Ultimate Fail-Safe: Checking time on submit
+            const selectedDateTime = new Date(`${dateInput.value}T${timeInput.value}`);
+            if (selectedDateTime < new Date()) {
+                alert("Hold up! You cannot book a slot in the past. Select a valid time.");
+                return;
+            }
             
             const btnSubmit = document.querySelector('.btn-submit');
             btnSubmit.innerText = "Adding...";
