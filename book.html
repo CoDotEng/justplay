@@ -32,7 +32,7 @@
         .hamburger { display: none; font-size: 2rem; color: #00e5ff; cursor: pointer; background: none; border: none; }
 
         /* Page Layout */
-        .page-container { margin-top: 120px; flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 0 20px; }
+        .page-container { margin-top: 120px; flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 0 20px; margin-bottom: 50px; }
         .glow-title { text-shadow: 0 0 15px #b026ff, 0 0 30px #b026ff; font-size: 3rem; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 30px; text-align: center; }
 
         /* The Boxes */
@@ -51,6 +51,9 @@
             font-size: 1.1rem; font-family: 'Rajdhani', sans-serif; transition: 0.3s;
         }
         input:focus, select:focus { outline: none; border-color: #b026ff; box-shadow: 0 0 10px rgba(176, 38, 255, 0.3); }
+        
+        /* Disabled Input Style */
+        select:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Buttons */
         .btn-google {
@@ -141,7 +144,8 @@
             
             <div class="input-group">
                 <label>Select Arsenal</label>
-                <select id="console-type">
+                <select id="console-type" required>
+                    <option value="" disabled selected>Select a station...</option>
                     <option value="PC">High-End PC (Rs. 110/hr)</option>
                     <option value="PS5_42">PS5 - 42" Display (Rs. 120/hr)</option>
                     <option value="PS5_65">PS5 MAX - 65" Display (Rs. 130/hr)</option>
@@ -156,7 +160,23 @@
 
             <div class="input-group">
                 <label>Arrival Time</label>
-                <input type="time" id="booking-time" required>
+                <select id="booking-time" disabled required>
+                    <option value="" disabled selected>Select a date first...</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Duration</label>
+                <select id="booking-duration" required>
+                    <option value="" disabled selected>How long are you playing?</option>
+                    <option value="0.5">30 Minutes</option>
+                    <option value="1">1 Hour</option>
+                    <option value="1.5">1.5 Hours</option>
+                    <option value="2">2 Hours</option>
+                    <option value="3">3 Hours</option>
+                    <option value="4">4 Hours</option>
+                    <option value="5">5+ Hours</option>
+                </select>
             </div>
 
             <div class="input-group">
@@ -173,6 +193,54 @@
 
     <script>
         function toggleMenu() { document.getElementById("navLinks").classList.toggle("active"); }
+
+        // Block past dates in the date picker
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('booking-date').setAttribute('min', today);
+
+        // Smart Time Generator Logic
+        const dateInput = document.getElementById('booking-date');
+        const timeSelect = document.getElementById('booking-time');
+
+        dateInput.addEventListener('change', (e) => {
+            const selectedDate = new Date(e.target.value);
+            const day = selectedDate.getDay(); // 0 is Sunday, 1-6 is Mon-Sat
+            
+            timeSelect.innerHTML = '<option value="" disabled selected>Select an arrival time...</option>';
+            timeSelect.disabled = false;
+
+            // Set specific hours based on the day of the week
+            let startHour = (day === 0) ? 10 : 11;
+            let startMin = (day === 0) ? 30 : 0;
+            let endHour = (day === 0) ? 21 : 20; // 9:00 PM Sunday, 8:30 PM Mon-Sat
+            let endMin = (day === 0) ? 0 : 30;
+
+            let curH = startHour;
+            let curM = startMin;
+
+            // Generate 30-minute intervals until closing time
+            while(curH < endHour || (curH === endHour && curM <= endMin)) {
+                let ampm = curH >= 12 ? 'PM' : 'AM';
+                let dispH = curH > 12 ? curH - 12 : (curH === 0 ? 12 : curH);
+                let dispM = curM === 0 ? '00' : '30';
+                let timeStr = `${dispH}:${dispM} ${ampm}`;
+                
+                let valH = curH.toString().padStart(2, '0');
+                let valStr = `${valH}:${dispM}`;
+                
+                let option = document.createElement('option');
+                option.value = valStr;
+                option.text = timeStr;
+                timeSelect.appendChild(option);
+                
+                // Increment by 30 mins
+                curM += 30;
+                if(curM >= 60) {
+                    curM = 0;
+                    curH++;
+                }
+            }
+        });
     </script>
 
     <!-- FIREBASE MODULAR SDK INTEGRATION -->
@@ -180,7 +248,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-     const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
   authDomain: "justplay-booking-engine.firebaseapp.com",
   projectId: "justplay-booking-engine",
