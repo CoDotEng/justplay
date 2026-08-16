@@ -426,7 +426,45 @@
                 // The Loop Cheat Code: Fires multiple docs so the Admin UI doesn't break
                 for(let i = 0; i < requestedSeats; i++) {
                     let nameSuffix = requestedSeats > 1 ? ` (Player ${i + 1})` : "";
+                    try {
+                // The Loop Cheat Code: Fires multiple docs so the Admin UI doesn't break
+                for(let i = 0; i < requestedSeats; i++) {
+                    let nameSuffix = requestedSeats > 1 ? ` (Player ${i + 1})` : "";
                     
+                    await addDoc(collection(db, "bookings"), {
+                        name: nameVal + nameSuffix,
+                        userEmail: currentUser.email,
+                        console: document.getElementById('console-type').value,
+                        date: document.getElementById('booking-date').value,
+                        timeString: timeVal,
+                        startTime: reqStart,
+                        duration: parseFloat(document.getElementById('booking-duration').value),
+                        endTime: reqStart + parseFloat(document.getElementById('booking-duration').value),
+                        phone: document.getElementById('booking-phone').value || "None",
+                        timestamp: new Date()
+                    });
+                }
+                
+                // --- PASTE THIS NEW FETCH BLOCK EXACTLY HERE ---
+                fetch('/api/notify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: nameVal,
+                        consoleType: document.getElementById('console-type').value,
+                        timeString: timeVal
+                    })
+                }).catch(err => console.error("Ping engine failed silently:", err));
+                // -----------------------------------------------
+                
+                alert(`Booking Confirmed for ${requestedSeats} player(s)! See you at Just Play.`);
+                window.location.reload(); 
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert("Error securing slot. Please try again.");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Confirm Booking";
+            }
                     await addDoc(collection(db, "bookings"), {
                         name: nameVal + nameSuffix,
                         userEmail: currentUser.email,
