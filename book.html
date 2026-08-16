@@ -153,6 +153,15 @@
                 </select>
             </div>
 
+            <!-- THE SQUAD LINK SELECTION -->
+            <div class="input-group">
+                <label>Squad Size (Seats)</label>
+                <select id="booking-seats" class="check-trigger" required>
+                    <option value="1" selected>1 Player (Solo)</option>
+                    <option value="2">2 Players (Duo Matchmaking)</option>
+                </select>
+            </div>
+
             <div class="input-group">
                 <label>Date</label>
                 <input type="date" id="booking-date" class="check-trigger" required>
@@ -262,14 +271,13 @@
         import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
-  apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
-  authDomain: "justplay-booking-engine.firebaseapp.com",
-  projectId: "justplay-booking-engine",
-  storageBucket: "justplay-booking-engine.firebasestorage.app",
-  messagingSenderId: "275838911544",
-  appId: "1:275838911544:web:c23d5f7054fb4f9b5592cd"
-};
-
+            apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
+            authDomain: "justplay-booking-engine.firebaseapp.com",
+            projectId: "justplay-booking-engine",
+            storageBucket: "justplay-booking-engine.firebasestorage.app",
+            messagingSenderId: "275838911544",
+            appId: "1:275838911544:web:c23d5f7054fb4f9b5592cd"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -347,11 +355,12 @@
             }
         });
 
-        // The Overlap Engine (Live Availability Checker)
+        // The Overlap & Squad Engine (Live Availability Checker)
         const checkTriggers = document.querySelectorAll('.check-trigger');
         
         async function checkAvailability() {
             const consoleVal = document.getElementById('console-type').value;
+            const requestedSeats = parseInt(document.getElementById('booking-seats').value);
             const dateVal = document.getElementById('booking-date').value;
             const timeVal = document.getElementById('booking-time').value;
             const durationVal = document.getElementById('booking-duration').value;
@@ -381,9 +390,12 @@
 
             const available = MAX_CAPACITY - overlaps;
 
-            if (available > 0) {
-                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${available}/${MAX_CAPACITY} Slots Available</span>`;
+            if (available >= requestedSeats) {
+                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${requestedSeats} Seat(s) Available! Ready to lock in.</span>`;
                 submitBtn.disabled = false;
+            } else if (available > 0) {
+                statusDisplay.innerHTML = `<span style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">⚠️ Only ${available} seat(s) left. Lower your squad size.</span>`;
+                submitBtn.disabled = true;
             } else {
                 statusDisplay.innerHTML = `<span style="color: #ff0000; text-shadow: 0 0 10px #ff0000;">🔴 Fully Booked for this time</span>`;
                 submitBtn.disabled = true;
@@ -392,9 +404,10 @@
 
         checkTriggers.forEach(trigger => trigger.addEventListener('change', checkAvailability));
 
-        // Submit Booking to Firestore
+        // Submit Booking(s) to Firestore
         submitBtn.addEventListener('click', async () => {
             const nameVal = document.getElementById('booking-name').value;
+            const requestedSeats = parseInt(document.getElementById('booking-seats').value);
             
             // Name Safety Check
             if(!nameVal) {
@@ -403,27 +416,32 @@
             }
             
             submitBtn.disabled = true;
-            submitBtn.innerText = "Securing Slot...";
+            submitBtn.innerText = "Securing Slot(s)...";
             
             const timeVal = document.getElementById('booking-time').value;
             const [hr, min] = timeVal.split(':');
             const reqStart = parseInt(hr) + (parseInt(min) / 60);
             
             try {
-                await addDoc(collection(db, "bookings"), {
-                    name: nameVal,
-                    userEmail: currentUser.email,
-                    console: document.getElementById('console-type').value,
-                    date: document.getElementById('booking-date').value,
-                    timeString: timeVal,
-                    startTime: reqStart,
-                    duration: parseFloat(document.getElementById('booking-duration').value),
-                    endTime: reqStart + parseFloat(document.getElementById('booking-duration').value),
-                    phone: document.getElementById('booking-phone').value || "None",
-                    timestamp: new Date()
-                });
+                // The Loop Cheat Code: Fires multiple docs so the Admin UI doesn't break
+                for(let i = 0; i < requestedSeats; i++) {
+                    let nameSuffix = requestedSeats > 1 ? ` (Player ${i + 1})` : "";
+                    
+                    await addDoc(collection(db, "bookings"), {
+                        name: nameVal + nameSuffix,
+                        userEmail: currentUser.email,
+                        console: document.getElementById('console-type').value,
+                        date: document.getElementById('booking-date').value,
+                        timeString: timeVal,
+                        startTime: reqStart,
+                        duration: parseFloat(document.getElementById('booking-duration').value),
+                        endTime: reqStart + parseFloat(document.getElementById('booking-duration').value),
+                        phone: document.getElementById('booking-phone').value || "None",
+                        timestamp: new Date()
+                    });
+                }
                 
-                alert("Booking Confirmed! See you at Just Play.");
+                alert(`Booking Confirmed for ${requestedSeats} player(s)! See you at Just Play.`);
                 window.location.reload(); 
             } catch (e) {
                 console.error("Error adding document: ", e);
