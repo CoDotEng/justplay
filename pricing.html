@@ -75,10 +75,13 @@
         .device { font-size: 1.5rem; color: #fff; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
         .spec { font-size: 1rem; color: #aaa; margin-bottom: 20px; min-height: 24px; }
         
-        .price-container { margin-bottom: 20px; }
-        /* Fix for the Rupee Symbol Glitch: Using a standard system font just for the symbol */
-        .currency { font-size: 2rem; color: #00e5ff; font-family: sans-serif; font-weight: 700; vertical-align: top; }
+        .price-container { margin-bottom: 20px; display: flex; justify-content: center; align-items: flex-start; gap: 5px; }
+        
+        /* 100% Sureshot Fix: Using 'Rs.' with a safe font */
+        .currency { font-size: 1.8rem; color: #00e5ff; font-family: 'Rajdhani', sans-serif; font-weight: 700; margin-top: 5px; }
         .price { font-size: 4rem; font-weight: 700; color: #fff; line-height: 1; font-family: 'Orbitron', sans-serif; }
+        
+        .duration-container { text-align: center; }
         .duration { font-size: 1rem; color: #777; display: block; margin-top: 5px; letter-spacing: 2px; }
 
         .sim-flex { color: #b026ff; font-size: 0.95rem; font-weight: 600; margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px; line-height: 1.4; }
@@ -163,9 +166,9 @@
                 <h3 class="device">PC GAMING</h3>
                 <p class="spec">High-End Rigs</p>
                 <div class="price-container">
-                    <span class="currency">₹</span><span class="price">110</span>
-                    <span class="duration">/ HOUR</span>
+                    <span class="currency">Rs.</span><span class="price">110</span>
                 </div>
+                <div class="duration-container"><span class="duration">/ HOUR</span></div>
             </div>
 
             <!-- PS5 42" -->
@@ -173,9 +176,9 @@
                 <h3 class="device">PS5</h3>
                 <p class="spec">42" TV Display</p>
                 <div class="price-container">
-                    <span class="currency">₹</span><span class="price">120</span>
-                    <span class="duration">/ HOUR</span>
+                    <span class="currency">Rs.</span><span class="price">120</span>
                 </div>
+                <div class="duration-container"><span class="duration">/ HOUR</span></div>
             </div>
 
             <!-- PS5 65" -->
@@ -183,9 +186,9 @@
                 <h3 class="device">PS5 MAX</h3>
                 <p class="spec">Massive 65" TV</p>
                 <div class="price-container">
-                    <span class="currency">₹</span><span class="price">130</span>
-                    <span class="duration">/ HOUR</span>
+                    <span class="currency">Rs.</span><span class="price">130</span>
                 </div>
+                <div class="duration-container"><span class="duration">/ HOUR</span></div>
             </div>
 
             <!-- Sim Racing -->
@@ -193,9 +196,9 @@
                 <h3 class="device">SIM RACING</h3>
                 <p class="spec">Full Rig Experience</p>
                 <div class="price-container">
-                    <span class="currency">₹</span><span class="price">150</span>
-                    <span class="duration">/ HOUR</span>
+                    <span class="currency">Rs.</span><span class="price">150</span>
                 </div>
+                <div class="duration-container"><span class="duration">/ HOUR</span></div>
                 <div class="sim-flex">
                     Equipped with Logitech G29 Dual-Motor Force Feedback & Premium Pedals.
                 </div>
