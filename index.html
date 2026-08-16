@@ -1,1 +1,79 @@
-<h1>Just Play Dashboard - Initializing...</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Play | Command Center</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Orbitron', sans-serif; }
+        
+        body { 
+            background-color: #050505; 
+            color: #ffffff; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            overflow: hidden;
+            background-image: radial-gradient(circle at center, #1a0b2e 0%, #050505 100%);
+        }
+        
+        .glow-text { 
+            color: #fff; 
+            text-shadow: 0 0 10px #b026ff, 0 0 20px #b026ff, 0 0 40px #b026ff; 
+            margin-bottom: 10px; 
+            font-size: 3rem; 
+            text-transform: uppercase; 
+            letter-spacing: 3px;
+            text-align: center;
+        }
+        
+        .subtitle { 
+            color: #00e5ff; 
+            font-size: 1rem; 
+            margin-bottom: 50px; 
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px #00e5ff;
+        }
+        
+        .btn-neon { 
+            background: transparent; 
+            color: #00e5ff; 
+            border: 2px solid #00e5ff; 
+            padding: 18px 50px; 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            box-shadow: 0 0 10px #00e5ff inset, 0 0 20px #00e5ff; 
+            transition: 0.3s ease-in-out; 
+            letter-spacing: 1px;
+        }
+        
+        .btn-neon:hover { 
+            background: #00e5ff; 
+            color: #050505; 
+            box-shadow: 0 0 20px #00e5ff, 0 0 40px #00e5ff, 0 0 60px #00e5ff; 
+        }
+
+        .agency-tag {
+            position: absolute;
+            bottom: 20px;
+            color: #444;
+            font-family: sans-serif;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="glow-text">JUST PLAY</h1>
+    <p class="subtitle">AUTOMATION TERMINAL // ONLINE</p>
+    <button class="btn-neon">Book A Console</button>
+    <div class="agency-tag">Engineered by CODOT</div>
+</body>
+</html>
