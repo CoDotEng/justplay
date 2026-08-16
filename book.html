@@ -138,6 +138,11 @@
             <div id="user-info">Logged in as: <span id="display-email" style="color:#00e5ff; font-weight: bold;"></span> <button id="btn-logout" style="background:none; border:none; color: #b026ff; cursor: pointer; text-decoration: underline; margin-left: 10px;">(Logout)</button></div>
             
             <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="booking-name" placeholder="e.g. Aditya" required>
+            </div>
+
+            <div class="input-group">
                 <label>Select Arsenal</label>
                 <select id="console-type" class="check-trigger" required>
                     <option value="" disabled selected>Select a station...</option>
@@ -191,14 +196,14 @@
     <script>
         function toggleMenu() { document.getElementById("navLinks").classList.toggle("active"); }
 
-        // Block past dates using local machine time
+        // Block past dates
         const now = new Date();
         const todayString = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         const dateInput = document.getElementById('booking-date');
         const timeSelect = document.getElementById('booking-time');
         dateInput.setAttribute('min', todayString);
 
-        // Smart Time Generator (with past-time blocking)
+        // Smart Time Generator
         dateInput.addEventListener('change', (e) => {
             const selectedDateString = e.target.value;
             const selectedDate = new Date(selectedDateString);
@@ -214,7 +219,6 @@
             
             let curH = startHour, curM = startMin;
             
-            // Re-fetch current time in case they left the tab open
             const currentNow = new Date();
             const isToday = selectedDateString === todayString;
             const currentHour = currentNow.getHours();
@@ -223,7 +227,6 @@
             let slotsAdded = 0;
 
             while(curH < endHour || (curH === endHour && curM <= endMin)) {
-                // Time Travel Lock
                 if (isToday) {
                     if (curH < currentHour || (curH === currentHour && curM <= currentMin)) {
                         curM += 30; if(curM >= 60) { curM = 0; curH++; }
@@ -258,7 +261,7 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
   authDomain: "justplay-booking-engine.firebaseapp.com",
   projectId: "justplay-booking-engine",
@@ -266,6 +269,7 @@ const firebaseConfig = {
   messagingSenderId: "275838911544",
   appId: "1:275838911544:web:c23d5f7054fb4f9b5592cd"
 };
+
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -390,6 +394,14 @@ const firebaseConfig = {
 
         // Submit Booking to Firestore
         submitBtn.addEventListener('click', async () => {
+            const nameVal = document.getElementById('booking-name').value;
+            
+            // Name Safety Check
+            if(!nameVal) {
+                alert("Please enter your full name.");
+                return;
+            }
+            
             submitBtn.disabled = true;
             submitBtn.innerText = "Securing Slot...";
             
@@ -399,6 +411,7 @@ const firebaseConfig = {
             
             try {
                 await addDoc(collection(db, "bookings"), {
+                    name: nameVal,
                     userEmail: currentUser.email,
                     console: document.getElementById('console-type').value,
                     date: document.getElementById('booking-date').value,
