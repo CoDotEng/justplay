@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Just Play | Gaming Rates</title>
+    <title>Just Play | Gaming Rates & Hours</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@500;600;700&display=swap');
         
@@ -22,7 +22,7 @@
 
         h1, h2, h3, .brand { font-family: 'Orbitron', sans-serif; }
         
-        /* Navbar Styles (Matches index.html) */
+        /* Navbar Styles */
         nav { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 20px 50px; background: rgba(5, 5, 5, 0.8); 
@@ -67,9 +67,7 @@
             transform: scaleX(0); transition: 0.4s;
         }
         
-        /* Special premium highlight for Sim & 65" PS5 */
         .price-card.premium::before { background: #b026ff; box-shadow: 0 0 15px #b026ff; }
-
         .price-card:hover::before { transform: scaleX(1); }
         .price-card:hover { transform: translateY(-10px); border-color: rgba(0, 229, 255, 0.5); background: rgba(10, 30, 40, 0.6); }
         .price-card.premium:hover { border-color: rgba(176, 38, 255, 0.5); background: rgba(30, 10, 40, 0.6); }
@@ -78,12 +76,49 @@
         .spec { font-size: 1rem; color: #aaa; margin-bottom: 20px; min-height: 24px; }
         
         .price-container { margin-bottom: 20px; }
-        .currency { font-size: 2rem; color: #00e5ff; font-family: 'Orbitron', sans-serif; font-weight: 700; vertical-align: top; }
+        /* Fix for the Rupee Symbol Glitch: Using a standard system font just for the symbol */
+        .currency { font-size: 2rem; color: #00e5ff; font-family: sans-serif; font-weight: 700; vertical-align: top; }
         .price { font-size: 4rem; font-weight: 700; color: #fff; line-height: 1; font-family: 'Orbitron', sans-serif; }
         .duration { font-size: 1rem; color: #777; display: block; margin-top: 5px; letter-spacing: 2px; }
 
-        /* Custom flex for the G29 setup */
         .sim-flex { color: #b026ff; font-size: 0.95rem; font-weight: 600; margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px; line-height: 1.4; }
+
+        /* Opening Hours Section */
+        .timings-card {
+            background: rgba(15, 15, 15, 0.8);
+            border: 1px solid rgba(176, 38, 255, 0.3);
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            margin: 60px auto 20px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .timings-card h3 { 
+            color: #b026ff; 
+            font-size: 1.5rem; 
+            margin-bottom: 25px; 
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px rgba(176, 38, 255, 0.5);
+        }
+
+        .timing-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 15px; 
+            border-bottom: 1px dashed #333; 
+            padding-bottom: 10px; 
+        }
+
+        .timing-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .timing-day { color: #00e5ff; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .timing-hours { color: #fff; font-weight: 500; letter-spacing: 1px; }
 
         /* Footer */
         footer { text-align: center; padding: 30px; background: #020202; color: #555; font-size: 0.9rem; letter-spacing: 1px; margin-top: auto; border-top: 1px solid #111; }
@@ -95,6 +130,8 @@
             .nav-links { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; width: 100%; background: rgba(5, 5, 5, 0.95); border-bottom: 1px solid rgba(176, 38, 255, 0.3); padding: 20px 0; text-align: center; }
             .nav-links.active { display: flex; }
             .glow-title { font-size: 2.5rem; }
+            .timings-card { margin: 40px 20px 20px; }
+            .timing-row { flex-direction: column; gap: 5px; text-align: center; }
         }
     </style>
 </head>
@@ -117,7 +154,7 @@
         <p class="subtitle">Pay by the hour. No hidden fees.</p>
     </header>
 
-    <!-- Pricing Grid Area -->
+    <!-- Pricing Grid & Timings Area -->
     <section class="pricing-section">
         <div class="grid">
             
@@ -163,7 +200,19 @@
                     Equipped with Logitech G29 Dual-Motor Force Feedback & Premium Pedals.
                 </div>
             </div>
+        </div>
 
+        <!-- Opening Hours Box -->
+        <div class="timings-card">
+            <h3>OPENING HOURS</h3>
+            <div class="timing-row">
+                <span class="timing-day">Monday – Saturday</span>
+                <span class="timing-hours">11:00 AM – 8:30 PM</span>
+            </div>
+            <div class="timing-row">
+                <span class="timing-day">Sunday</span>
+                <span class="timing-hours">10:30 AM – 9:00 PM</span>
+            </div>
         </div>
     </section>
 
