@@ -1,0 +1,15 @@
+{
+  "name": "Just Play Command Center",
+  "short_name": "JP Admin",
+  "start_url": "/admin.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#b026ff",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/GitHub_Invertocat_Logo.svg/1024px-GitHub_Invertocat_Logo.svg.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ]
+}
