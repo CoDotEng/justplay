@@ -87,7 +87,6 @@
 
         <button class="btn-primary" id="btn-login">Secure Login</button>
         
-        <!-- WARNING: Delete or comment out this button once he makes his account! -->
         <button class="btn-secondary" id="btn-register">Create Account (First Time)</button>
 
         <span class="text-link" id="btn-forgot-password">Forgot Password? Send Reset Link</span>
@@ -98,15 +97,10 @@
     <!-- DASHBOARD SECTION -->
     <div id="dashboard-section">
         <div class="header-bar">
-            <h2>LIVE BOOKINGS</h2>
+            <h2>ALL UPCOMING BOOKINGS</h2>
             <button class="btn-secondary" id="btn-logout" style="width: auto; margin: 0;">Logout</button>
         </div>
         
-        <div class="input-group" style="max-width: 250px;">
-            <label>Filter by Date</label>
-            <input type="date" id="filter-date">
-        </div>
-
         <div id="bookings-container">
             <!-- Bookings will load here -->
         </div>
@@ -115,7 +109,6 @@
     <!-- FIREBASE INTEGRATION -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        // NOTE: We now import Email/Password auth functions instead of Google auth
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -132,16 +125,13 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // UI Elements
         const authSection = document.getElementById('auth-section');
         const dashboardSection = document.getElementById('dashboard-section');
         const authMessage = document.getElementById('auth-message');
         const emailInput = document.getElementById('admin-email');
         const pwdInput = document.getElementById('admin-password');
 
-        // --- AUTHENTICATION LOGIC ---
-
-        // 1. Login
+        // Login
         document.getElementById('btn-login').addEventListener('click', () => {
             const email = emailInput.value.trim();
             const pwd = pwdInput.value.trim();
@@ -152,7 +142,7 @@
                 .catch(error => authMessage.innerText = error.message);
         });
 
-        // 2. Register (Owner does this once)
+        // Register
         document.getElementById('btn-register').addEventListener('click', () => {
             const email = emailInput.value.trim();
             const pwd = pwdInput.value.trim();
@@ -164,7 +154,7 @@
                 .catch(error => authMessage.innerText = error.message);
         });
 
-        // 3. Forgot Password / Reset
+        // Forgot Password
         document.getElementById('btn-forgot-password').addEventListener('click', () => {
             const email = emailInput.value.trim();
             if(!email) return authMessage.innerText = "Type your email above first, then click reset.";
@@ -174,17 +164,17 @@
                 .catch(error => authMessage.innerText = error.message);
         });
 
-        // 4. Logout
+        // Logout
         document.getElementById('btn-logout').addEventListener('click', () => {
             signOut(auth);
         });
 
-        // 5. Auth State Observer
+        // Auth Observer
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 authSection.style.display = 'none';
                 dashboardSection.style.display = 'block';
-                loadBookings(); // Fetch data once logged in
+                loadBookings(); 
             } else {
                 authSection.style.display = 'block';
                 dashboardSection.style.display = 'none';
@@ -194,33 +184,29 @@
             }
         });
 
-        // --- DASHBOARD LOGIC (Dead Simple View) ---
-        
-        const filterDate = document.getElementById('filter-date');
+        // --- DASHBOARD LOGIC (Master List View) ---
         const container = document.getElementById('bookings-container');
-        
-        // Set date picker to today by default
-        const now = new Date();
-        filterDate.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-
-        filterDate.addEventListener('change', loadBookings);
-
         let unsubscribe = null;
 
         function loadBookings() {
-            const selectedDate = filterDate.value;
-            if(!selectedDate) return;
-
-            // Clean up old listener if it exists
             if(unsubscribe) unsubscribe();
 
-            const q = query(collection(db, "bookings"), where("date", "==", selectedDate), orderBy("startTime", "asc"));
+            const now = new Date();
+            const todayString = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+            // Fetches all bookings from today onwards, sorted by date, then sorted by time
+            const q = query(
+                collection(db, "bookings"), 
+                where("date", ">=", todayString), 
+                orderBy("date", "asc"), 
+                orderBy("startTime", "asc")
+            );
             
             unsubscribe = onSnapshot(q, (snapshot) => {
                 container.innerHTML = '';
                 
                 if(snapshot.empty) {
-                    container.innerHTML = '<p style="color: #aaa; text-align: center; margin-top: 30px;">No bookings found for this date.</p>';
+                    container.innerHTML = '<p style="color: #aaa; text-align: center; margin-top: 30px;">No upcoming bookings found.</p>';
                     return;
                 }
 
@@ -228,7 +214,6 @@
                     const data = docSnap.data();
                     const docId = docSnap.id;
                     
-                    // Convert duration to readable format
                     const durationText = data.duration === 0.5 ? "30 Mins" : `${data.duration} Hour(s)`;
 
                     const card = document.createElement('div');
@@ -237,7 +222,7 @@
                         <div class="booking-info">
                             <h3>${data.name}</h3>
                             <p>📞 ${data.phone}</p>
-                            <p style="margin-top: 5px; font-weight: bold; color: #fff;">⏰ ${data.timeString} (${durationText})</p>
+                            <p style="margin-top: 5px; font-weight: bold; color: #fff;">📅 ${data.date} | ⏰ ${data.timeString} (${durationText})</p>
                         </div>
                         <div class="booking-meta">
                             <span class="console-tag">${data.console}</span><br>
@@ -247,7 +232,6 @@
                     container.appendChild(card);
                 });
 
-                // Attach delete logic to newly generated buttons
                 document.querySelectorAll('.btn-delete').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         const id = e.target.getAttribute('data-id');
@@ -256,6 +240,22 @@
                         }
                     });
                 });
+            }, (error) => {
+                // THE CHEAT CODE: If Firebase throws an index error, it builds a clickable link on screen
+                if(error.message.includes("requires an index")) {
+                    const linkMatch = error.message.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
+                    const link = linkMatch ? linkMatch[0] : '#';
+                    container.innerHTML = `
+                        <div style="background: rgba(255,0,0,0.2); padding: 20px; border: 1px solid red; border-radius: 8px; text-align: center;">
+                            <h3 style="color: #ff4444; margin-bottom: 10px;">Database Sort Index Required</h3>
+                            <p>Firebase requires a new composite index to sort by Date + Time simultaneously.</p>
+                            <a href="${link}" target="_blank" style="display: inline-block; margin-top: 15px; background: #ff4444; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">CLICK HERE TO AUTO-BUILD INDEX</a>
+                            <p style="margin-top: 15px; font-size: 0.9rem; color: #aaa;">After clicking the link, wait 3-5 minutes for Firebase to build it, then refresh this page.</p>
+                        </div>
+                    `;
+                } else {
+                    console.error("Dashboard Error: ", error);
+                }
             });
         }
     </script>
