@@ -188,13 +188,20 @@
         const container = document.getElementById('bookings-container');
         let unsubscribe = null;
 
+        // 🚨 HOURLY RATES (Update these to match his exact shop prices)
+        const RATES = {
+            "PC": 110,         // ₹110 per hour
+            "PS5_42": 130,     // ₹130 per hour
+            "PS5_65": 160,     // ₹160 per hour
+            "SIM": 200         // ₹200 per hour
+        };
+
         function loadBookings() {
             if(unsubscribe) unsubscribe();
 
             const now = new Date();
             const todayString = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
 
-            // Fetches all bookings from today onwards, sorted by date, then sorted by time
             const q = query(
                 collection(db, "bookings"), 
                 where("date", ">=", todayString), 
@@ -215,6 +222,10 @@
                     const docId = docSnap.id;
                     
                     const durationText = data.duration === 0.5 ? "30 Mins" : `${data.duration} Hour(s)`;
+                    
+                    // Billing Calculation
+                    const hourlyRate = RATES[data.console] || 100; // Fallback to 100 if console isn't found
+                    const totalBill = hourlyRate * data.duration;
 
                     const card = document.createElement('div');
                     card.className = 'booking-card';
@@ -223,6 +234,7 @@
                             <h3>${data.name}</h3>
                             <p>📞 ${data.phone}</p>
                             <p style="margin-top: 5px; font-weight: bold; color: #fff;">📅 ${data.date} | ⏰ ${data.timeString} (${durationText})</p>
+                            <p style="margin-top: 5px; font-weight: bold; color: #00ff00; font-size: 1.3rem;">💰 Bill: ₹${totalBill}</p>
                         </div>
                         <div class="booking-meta">
                             <span class="console-tag">${data.console}</span><br>
@@ -241,7 +253,6 @@
                     });
                 });
             }, (error) => {
-                // THE CHEAT CODE: If Firebase throws an index error, it builds a clickable link on screen
                 if(error.message.includes("requires an index")) {
                     const linkMatch = error.message.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
                     const link = linkMatch ? linkMatch[0] : '#';
