@@ -241,7 +241,7 @@
             submitBtn.disabled = true;
 
             const [hr, min] = timeVal.split(':');
-            const reqStart = parseInt(hr) + (parseInt(min) / 60);
+            const reqStart = parseInt(hr, 10) + (parseInt(min, 10) / 60);
             const reqDuration = parseFloat(durationVal);
             const reqEnd = reqStart + reqDuration;
 
@@ -261,13 +261,14 @@
             const available = MAX_CAPACITY - overlaps;
 
             if (available >= requestedSeats) {
-                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${requestedSeats} Seat(s) Available! Ready to lock in.</span>`;
+                // FIXED: Now displays the total available seats in the shop, not just what they asked for.
+                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${available} Seat(s) Open in total. Ready to lock in your ${requestedSeats}!</span>`;
                 submitBtn.disabled = false;
             } else if (available > 0) {
                 statusDisplay.innerHTML = `<span style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">⚠️ Only ${available} seat(s) left. Lower your squad size.</span>`;
                 submitBtn.disabled = true;
             } else {
-                statusDisplay.innerHTML = `<span style="color: #ff0000; text-shadow: 0 0 10px #ff0000;">🔴 Fully Booked for this time</span>`;
+                statusDisplay.innerHTML = `<span style="color: #ff0000; text-shadow: 0 0 10px #ff0000;">🔴 Fully Booked for this exact time</span>`;
                 submitBtn.disabled = true;
             }
         }
@@ -278,6 +279,10 @@
             const nameVal = document.getElementById('booking-name').value.trim();
             const phoneVal = document.getElementById('booking-phone').value.trim();
             const requestedSeats = parseInt(document.getElementById('booking-seats').value);
+            const consoleVal = document.getElementById('console-type').value;
+            const dateVal = document.getElementById('booking-date').value;
+            const timeVal = document.getElementById('booking-time').value;
+            const durationVal = document.getElementById('booking-duration').value;
             
             if(!nameVal) {
                 alert("Please enter your full name.");
@@ -288,27 +293,56 @@
                 alert("Please enter a valid 10-digit phone number.");
                 return;
             }
+
+            if(!consoleVal || !dateVal || !timeVal || !durationVal) {
+                alert("Please fill out all booking details.");
+                return;
+            }
             
             submitBtn.disabled = true;
             submitBtn.innerText = "Securing Slot(s)...";
             
-            const timeVal = document.getElementById('booking-time').value;
             const [hr, min] = timeVal.split(':');
-            const reqStart = parseInt(hr) + (parseInt(min) / 60);
+            const reqStart = parseInt(hr, 10) + (parseInt(min, 10) / 60);
+            const reqDuration = parseFloat(durationVal);
+            const reqEnd = reqStart + reqDuration;
             
             try {
+                // FIXED: The Anti-Sniper Check. We re-query the database right before we write to it.
+                const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
+                const querySnapshot = await getDocs(q);
+                
+                let overlaps = 0;
+                const MAX_CAPACITY = 2; 
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if(reqStart < data.endTime && reqEnd > data.startTime) {
+                        overlaps++;
+                    }
+                });
+
+                if ((MAX_CAPACITY - overlaps) < requestedSeats) {
+                    alert("Bruh, someone just sniped these seats while you were looking. Pick another time.");
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Confirm Booking";
+                    checkAvailability(); // Refresh the UI to show it's taken
+                    return; // Stop the booking dead in its tracks
+                }
+
+                // If the check passes, we write the data
                 for(let i = 0; i < requestedSeats; i++) {
                     let nameSuffix = requestedSeats > 1 ? ` (Player ${i + 1})` : "";
                     
                     await addDoc(collection(db, "bookings"), {
                         name: nameVal + nameSuffix,
                         phone: phoneVal,
-                        console: document.getElementById('console-type').value,
-                        date: document.getElementById('booking-date').value,
+                        console: consoleVal,
+                        date: dateVal,
                         timeString: timeVal,
                         startTime: reqStart,
-                        duration: parseFloat(document.getElementById('booking-duration').value),
-                        endTime: reqStart + parseFloat(document.getElementById('booking-duration').value),
+                        duration: reqDuration,
+                        endTime: reqEnd,
                         timestamp: new Date()
                     });
                 }
@@ -318,7 +352,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name: nameVal,
-                        consoleType: document.getElementById('console-type').value,
+                        consoleType: consoleVal,
                         timeString: timeVal
                     })
                 }).catch(err => {});
