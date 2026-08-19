@@ -162,9 +162,18 @@
 
         const now = new Date();
         const todayString = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        
+        // --- THE TIME TRAVELER FIX ---
+        // Sets the max date to 7 days from today
+        const maxDate = new Date();
+        maxDate.setDate(now.getDate() + 7);
+        const maxString = maxDate.getFullYear() + '-' + String(maxDate.getMonth() + 1).padStart(2, '0') + '-' + String(maxDate.getDate()).padStart(2, '0');
+
         const dateInput = document.getElementById('booking-date');
         const timeSelect = document.getElementById('booking-time');
+        
         dateInput.setAttribute('min', todayString);
+        dateInput.setAttribute('max', maxString);
 
         dateInput.addEventListener('change', (e) => {
             const selectedDateString = e.target.value;
@@ -272,8 +281,6 @@
             const reqDuration = parseFloat(durationVal);
             const reqEnd = reqStart + reqDuration;
 
-            // --- THE LOOPHOLE FIX ---
-            // If he wants to change closing time later, just change 22 (10:00 PM) to 22.5 (10:30 PM) or 23 (11:00 PM)
             const closingTime = 22.0; 
             if (reqEnd > closingTime) {
                 statusDisplay.innerHTML = `<span style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">⚠️ Shop closes at 10:00 PM. Please reduce your playtime.</span>`;
@@ -328,7 +335,6 @@
             const reqDuration = parseFloat(durationVal);
             const reqEnd = reqStart + reqDuration;
             
-            // Hacker Check Backend (Just in case they bypassed the UI)
             const closingTime = 22.0; 
             if (reqEnd > closingTime) {
                 alert("Nice try, but the shop closes at 10 PM. Reduce your duration.");
