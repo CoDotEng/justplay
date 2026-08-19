@@ -163,8 +163,6 @@
         const now = new Date();
         const todayString = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         
-        // --- THE TIME TRAVELER FIX ---
-        // Sets the max date to 7 days from today
         const maxDate = new Date();
         maxDate.setDate(now.getDate() + 7);
         const maxString = maxDate.getFullYear() + '-' + String(maxDate.getMonth() + 1).padStart(2, '0') + '-' + String(maxDate.getDate()).padStart(2, '0');
@@ -327,7 +325,14 @@
             const durationVal = document.getElementById('booking-duration').value;
             
             if(!nameVal) { alert("Please enter your full name."); return; }
-            if(phoneVal.length < 10) { alert("Please enter a valid 10-digit phone number."); return; }
+            
+            // --- THE FAKE NUMBER FIX ---
+            const phoneRegex = /^[6-9]\d{9}$/;
+            if(!phoneRegex.test(phoneVal)) { 
+                alert("Please enter a valid 10-digit Indian mobile number."); 
+                return; 
+            }
+            
             if(!consoleVal || !dateVal || !timeVal || !durationVal) { alert("Please fill out all booking details."); return; }
             
             const [hr, min] = timeVal.split(':');
