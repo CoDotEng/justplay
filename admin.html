@@ -202,8 +202,7 @@
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
-                    // NOTE: You need to replace "YOUR_VAPID_KEY_HERE" with your actual Web Push Certificate key from Firebase Settings > Cloud Messaging
-                    const token = await getToken(messaging, { vapidKey: "YOUR_VAPID_KEY_HERE" });
+                    const token = await getToken(messaging, { vapidKey: "BBzj3MGUlJyoI16QO5ojSomHcseyx703nbUPDnF-7Yir9YJ4j8Zdwr5FmDEP0Rb8FRbbDUcEWMcXmZfsYIaTRdY" });
                     
                     if (token) {
                         console.log("FCM Token Generated:", token);
