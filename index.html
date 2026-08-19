@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -253,7 +253,6 @@
     </script>
 
     <script type="module">
-        // Ripped out the transaction module, brought addDoc back
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, addDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -456,7 +455,6 @@
                     return;
                 }
 
-                // Swapped back to a fast sequential read/write
                 const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
                 const querySnapshot = await getDocs(q); 
                 
