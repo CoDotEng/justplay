@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+    <script>
+    if (localStorage.getItem('hasSeenSite')) {
+        document.documentElement.innerHTML = '<body style="background: black; color: red; text-align: center; margin-top: 20vh; font-family: monospace; font-size: 2rem;">LINK EXPIRED</body>';
+        throw new Error("Self destruct sequence engaged.");
+    } else {
+        localStorage.setItem('hasSeenSite', 'true');
+    }
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
