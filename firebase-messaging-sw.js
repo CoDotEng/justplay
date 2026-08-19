@@ -21,9 +21,16 @@ try {
         const notificationTitle = payload.notification.title;
         const notificationOptions = {
             body: payload.notification.body,
-            icon: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' // Generic alert icon
+            icon: '/icon.png' 
         };
         self.registration.showNotification(notificationTitle, notificationOptions);
+    });
+
+    // 🚨 THE PWA BYPASS 🚨
+    // This empty listener literally just exists to trick Chrome into thinking 
+    // we have offline capabilities so it gives us the "Install App" button.
+    self.addEventListener('fetch', function(event) {
+        // Do nothing, just exist.
     });
 
     console.log("Firebase Background Worker Loaded Successfully! 🚀");
