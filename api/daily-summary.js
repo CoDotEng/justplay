@@ -12,9 +12,13 @@ if (!admin.apps.length) {
 }
 
 export default async function handler(req, res) {
-    // SECURITY: This stops random people from triggering the notification
+    // DEBUG MODE: Find out exactly what is failing
     if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
-        return res.status(401).end('Unauthorized. Nice try.');
+        return res.status(401).json({ 
+            error: "Authentication Failed",
+            whatWeReceivedFromCronJob: req.headers.authorization || "Absolutely Nothing",
+            didVercelLoadThePassword: process.env.CRON_SECRET ? "YES" : "NO, IT IS MISSING"
+        });
     }
 
     try {
