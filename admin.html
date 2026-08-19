@@ -56,6 +56,14 @@
         }
         .btn-notify:hover { background: #00b3cc; box-shadow: 0 0 10px #00e5ff; }
 
+        /* New button style for revenue */
+        .btn-revenue {
+            background: #00ff00; color: #000; border: none; padding: 10px 15px; 
+            border-radius: 4px; font-weight: bold; cursor: pointer; margin-right: 10px;
+            transition: 0.3s;
+        }
+        .btn-revenue:hover { background: #00cc00; box-shadow: 0 0 10px #00ff00; }
+
         .text-link { color: #00e5ff; cursor: pointer; text-decoration: underline; font-size: 0.9rem; display: block; margin-top: 15px; }
 
         /* Dashboard Styles */
@@ -63,6 +71,12 @@
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
         .header-buttons { display: flex; align-items: center; }
         
+        #revenue-display {
+            display: none; background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; 
+            padding: 15px; border-radius: 4px; margin-bottom: 20px; text-align: center; 
+            color: #00ff00; font-size: 1.2rem; font-weight: bold;
+        }
+
         .booking-card {
             background: rgba(20, 20, 20, 0.8); border-left: 4px solid #00e5ff;
             padding: 15px 20px; margin-bottom: 15px; border-radius: 4px;
@@ -108,10 +122,14 @@
         <div class="header-bar">
             <h2>ALL UPCOMING BOOKINGS</h2>
             <div class="header-buttons">
+                <button class="btn-revenue" id="btn-today-revenue">💰 Today's Revenue</button>
                 <button class="btn-notify" id="btn-enable-notify">🔔 Enable Notifications</button>
                 <button class="btn-secondary" id="btn-logout" style="width: auto; margin: 0;">Logout</button>
             </div>
         </div>
+
+        <!-- Hidden Revenue Display Box -->
+        <div id="revenue-display"></div>
         
         <div id="bookings-container">
             <!-- Bookings will load here -->
@@ -131,7 +149,7 @@
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"; // ADDED getDocs
         import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js"; 
 
         const firebaseConfig = {
@@ -197,6 +215,12 @@
             if (user) {
                 authSection.style.display = 'none';
                 dashboardSection.style.display = 'block';
+                
+                // Hide Notification button if already granted
+                if (Notification.permission === 'granted') {
+                    document.getElementById('btn-enable-notify').style.display = 'none';
+                }
+                
                 loadBookings(); 
             } else {
                 authSection.style.display = 'block';
@@ -213,7 +237,6 @@
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
                     
-                    // Grab the worker that we started automatically at the top
                     const registration = await navigator.serviceWorker.ready;
                     
                     const token = await getToken(messaging, { 
@@ -223,7 +246,6 @@
                     
                     if (token) {
                         console.log("FCM Token Generated:", token);
-                        alert("Permission granted! Linking your phone to the admin channel...");
                         
                         await fetch('/api/subscribe', {
                             method: 'POST',
@@ -232,6 +254,9 @@
                         });
                         
                         alert("Success! Your phone is now officially listening.");
+                        
+                        // Hide the button permanently since we are subscribed
+                        document.getElementById('btn-enable-notify').style.display = 'none';
                     } else {
                         alert("Failed to generate token. Check your VAPID key.");
                     }
@@ -244,16 +269,49 @@
             }
         });
 
+        const RATES = {
+            "PC": 110,        
+            "PS5_42": 120,    
+            "PS5_65": 130,    
+            "SIM": 150        
+        };
+
+        // --- TODAY's REVENUE CALCULATOR ---
+        document.getElementById('btn-today-revenue').addEventListener('click', async () => {
+            const now = new Date();
+            const todayString = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            
+            // Query ONLY today's bookings
+            const q = query(collection(db, "bookings"), where("date", "==", todayString));
+            
+            try {
+                const querySnapshot = await getDocs(q);
+                let dailyTotal = 0;
+                let totalHours = 0;
+                let bookingCount = 0;
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const hourlyRate = RATES[data.console] || 100;
+                    dailyTotal += (hourlyRate * data.duration);
+                    totalHours += data.duration;
+                    bookingCount++;
+                });
+
+                // Display the result in the neon green box
+                const display = document.getElementById('revenue-display');
+                display.style.display = 'block';
+                display.innerHTML = `🔥 TODAY: ${bookingCount} Bookings | ⏳ ${totalHours} Hours | 💰 ₹${dailyTotal}`;
+                
+            } catch(error) {
+                console.error("Error calculating revenue:", error);
+                alert("Could not load revenue. Check console.");
+            }
+        });
+
         // --- DASHBOARD LOGIC (Master List View) ---
         const container = document.getElementById('bookings-container');
         let unsubscribe = null;
-
-        const RATES = {
-            "PC": 110,         
-            "PS5_42": 120,     
-            "PS5_65": 130,     
-            "SIM": 150         
-        };
 
         function loadBookings() {
             if(unsubscribe) unsubscribe();
