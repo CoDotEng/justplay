@@ -12,13 +12,12 @@ if (!admin.apps.length) {
 }
 
 export default async function handler(req, res) {
-    // DEBUG MODE: Find out exactly what is failing
-    if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
-        return res.status(401).json({ 
-            error: "Authentication Failed",
-            whatWeReceivedFromCronJob: req.headers.authorization || "Absolutely Nothing",
-            didVercelLoadThePassword: process.env.CRON_SECRET ? "YES" : "NO, IT IS MISSING"
-        });
+    // SECURITY: Accepts Vercel's automatic cron header OR a manual browser link test via ?key=YOUR_SECRET
+    const isVercelCron = req.headers.authorization === `Bearer ${process.env.CRON_SECRET}`;
+    const isBrowserTest = req.query.key === process.env.CRON_SECRET;
+
+    if (!isVercelCron && !isBrowserTest) {
+        return res.status(401).json({ error: "Unauthorized. Nice try." });
     }
 
     try {
@@ -54,7 +53,7 @@ export default async function handler(req, res) {
 
         // Send Push Notification to the Admin Topic
         await admin.messaging().send({
-            topic: 'admin', // Ensure your service worker subscribes the owner to this topic!
+            topic: 'admin',
             notification: {
                 title: '📈 Daily Revenue Summary',
                 body: messageBody,
