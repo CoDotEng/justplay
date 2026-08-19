@@ -120,10 +120,19 @@
 
     <!-- FIREBASE INTEGRATION -->
     <script type="module">
+        // THE PWA FIX: Register Service Worker the exact millisecond the page loads
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/firebase-messaging-sw.js')
+                    .then(reg => console.log('Background Worker Registered Automatically!'))
+                    .catch(err => console.error('Worker failed to load:', err));
+            });
+        }
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, query, where, onSnapshot, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js"; // IMPORT MESSAGING
+        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js"; 
 
         const firebaseConfig = {
             apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
@@ -137,7 +146,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const messaging = getMessaging(app); // INITIALIZE MESSAGING
+        const messaging = getMessaging(app); 
 
         const authSection = document.getElementById('auth-section');
         const dashboardSection = document.getElementById('dashboard-section');
@@ -198,14 +207,14 @@
             }
         });
 
-        // --- PUSH NOTIFICATION LOGIC (MOBILE BULLETPROOF VERSION) ---
+        // --- PUSH NOTIFICATION LOGIC ---
         document.getElementById('btn-enable-notify').addEventListener('click', async () => {
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
                     
-                    // THE MOBILE FIX: Force-feed the Service Worker to the phone before getting the token
-                    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    // Grab the worker that we started automatically at the top
+                    const registration = await navigator.serviceWorker.ready;
                     
                     const token = await getToken(messaging, { 
                         vapidKey: "BBzj3MGUlJyoI16QO5ojSomHcseyx703nbUPDnF-7Yir9YJ4j8Zdwr5FmDEP0Rb8FRbbDUcEWMcXmZfsYIaTRdY", 
@@ -216,14 +225,13 @@
                         console.log("FCM Token Generated:", token);
                         alert("Permission granted! Linking your phone to the admin channel...");
                         
-                        // Send this token to our backend to subscribe to the 'admin' topic
                         await fetch('/api/subscribe', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ token: token })
                         });
                         
-                        alert("Success! Your phone is now officially listening for Daily Summaries.");
+                        alert("Success! Your phone is now officially listening.");
                     } else {
                         alert("Failed to generate token. Check your VAPID key.");
                     }
@@ -240,12 +248,11 @@
         const container = document.getElementById('bookings-container');
         let unsubscribe = null;
 
-        // 🚨 HOURLY RATES (Update these to match his exact shop prices)
         const RATES = {
-            "PC": 110,         // ₹110 per hour
-            "PS5_42": 120,     // ₹130 per hour
-            "PS5_65": 130,     // ₹160 per hour
-            "SIM": 150         // ₹200 per hour
+            "PC": 110,         
+            "PS5_42": 120,     
+            "PS5_65": 130,     
+            "SIM": 150         
         };
 
         function loadBookings() {
@@ -275,8 +282,7 @@
                     
                     const durationText = data.duration === 0.5 ? "30 Mins" : `${data.duration} Hour(s)`;
                     
-                    // Billing Calculation
-                    const hourlyRate = RATES[data.console] || 100; // Fallback to 100 if console isn't found
+                    const hourlyRate = RATES[data.console] || 100;
                     const totalBill = hourlyRate * data.duration;
 
                     const card = document.createElement('div');
