@@ -252,7 +252,7 @@
         });
     </script>
 
-    <script type="module">
+   <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, addDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -272,6 +272,9 @@
         const statusDisplay = document.getElementById('status-display');
         const billDisplay = document.getElementById('bill-display');
         const checkTriggers = document.querySelectorAll('.check-trigger');
+        
+        // THE KILL SWITCH LOCK
+        let isSubmitting = false;
         
         const RATES = {
             "PC": 110,
@@ -396,6 +399,9 @@
         checkTriggers.forEach(trigger => trigger.addEventListener('change', checkAvailability));
 
         submitBtn.addEventListener('click', async () => {
+            // KILL SWITCH ENGAGED: If already running, ignore completely
+            if (isSubmitting) return; 
+            
             let nameVal = document.getElementById('booking-name').value.trim();
             const phoneVal = document.getElementById('booking-phone').value.trim();
             const requestedSeats = parseInt(document.getElementById('booking-seats').value);
@@ -442,6 +448,8 @@
                 alert("Nice try, but the shop closes at 10 PM. Reduce your duration."); return;
             }
 
+            // LOCK THE DOOR
+            isSubmitting = true;
             submitBtn.disabled = true;
             submitBtn.innerText = "Securing Slot(s)...";
             
@@ -450,6 +458,7 @@
                 const userSnap = await getDocs(userQ);
                 if (userSnap.size >= 3) {
                     alert("You have reached the limit of 3 active bookings. Please cancel one or visit the shop to play!");
+                    isSubmitting = false;
                     submitBtn.disabled = false;
                     submitBtn.innerText = "Confirm Booking";
                     return;
@@ -470,6 +479,7 @@
 
                 if ((MAX_CAPACITY - overlaps) < requestedSeats) {
                     alert("Someone else booked these seats while you were looking. Pick another time.");
+                    isSubmitting = false;
                     submitBtn.disabled = false;
                     submitBtn.innerText = "Confirm Booking";
                     checkAvailability(); 
@@ -505,7 +515,9 @@
                 window.location.reload(); 
 
             } catch (e) {
-                alert("Error securing slot. Please try again.");
+                // If it fails, print exactly WHY it failed
+                alert("System Error: " + e.message);
+                isSubmitting = false;
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Confirm Booking";
                 checkAvailability(); 
