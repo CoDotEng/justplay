@@ -93,7 +93,8 @@
             
             <div class="input-group">
                 <label>Full Name</label>
-                <input type="text" id="booking-name" required>
+                <!-- FIX 3: HTML max length cap -->
+                <input type="text" id="booking-name" maxlength="30" required>
             </div>
 
             <div class="input-group">
@@ -148,7 +149,6 @@
 
             <div id="status-display"></div>
             
-            <!-- Dynamic Expected Bill Box -->
             <div id="bill-display">Expected Bill: ₹0 (excl. eatables)</div>
 
             <button class="btn-neon" id="submit-booking" disabled>Confirm Booking</button>
@@ -225,8 +225,9 @@
     </script>
 
     <script type="module">
+        // Added runTransaction and doc imports for the race condition patch
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, runTransaction, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
@@ -326,7 +327,12 @@
             
             if(!nameVal) { alert("Please enter your full name."); return; }
             
-            // --- THE FAKE NUMBER FIX ---
+            // FIX 3: JS max length verification
+            if (nameVal.length > 30) {
+                alert("Name is too long. Keep it under 30 characters.");
+                return;
+            }
+            
             const phoneRegex = /^[6-9]\d{9}$/;
             if(!phoneRegex.test(phoneVal)) { 
                 alert("Please enter a valid 10-digit Indian mobile number."); 
@@ -340,6 +346,16 @@
             const reqDuration = parseFloat(durationVal);
             const reqEnd = reqStart + reqDuration;
             
+            // FIX 4: Real-time clock check against spoofing
+            const realNow = new Date();
+            const todayStr = realNow.getFullYear() + '-' + String(realNow.getMonth() + 1).padStart(2, '0') + '-' + String(realNow.getDate()).padStart(2, '0');
+            const currentDecimalTime = realNow.getHours() + (realNow.getMinutes() / 60);
+            
+            if (dateVal === todayStr && reqStart <= currentDecimalTime) {
+                alert("You cannot book a time in the past! Please select a future time.");
+                return;
+            }
+
             const closingTime = 22.0; 
             if (reqEnd > closingTime) {
                 alert("Nice try, but the shop closes at 10 PM. Reduce your duration.");
@@ -350,42 +366,42 @@
             submitBtn.innerText = "Securing Slot(s)...";
             
             try {
-                const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
-                const querySnapshot = await getDocs(q);
-                
-                let overlaps = 0;
-                const MAX_CAPACITY = 2; 
+                // FIX 5: Firebase Transaction block to prevent double booking
+                await runTransaction(db, async (transaction) => {
+                    const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
+                    const querySnapshot = await getDocs(q); 
+                    
+                    let overlaps = 0;
+                    const MAX_CAPACITY = 2; 
 
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if(reqStart < data.endTime && reqEnd > data.startTime) {
-                        overlaps++;
+                    querySnapshot.forEach((d) => {
+                        const data = d.data();
+                        if(reqStart < data.endTime && reqEnd > data.startTime) {
+                            overlaps++;
+                        }
+                    });
+
+                    if ((MAX_CAPACITY - overlaps) < requestedSeats) {
+                        throw new Error("OVERBOOKED");
+                    }
+
+                    // Proceed to write if seats are valid
+                    for(let i = 0; i < requestedSeats; i++) {
+                        let nameSuffix = requestedSeats > 1 ? ` (Player ${i + 1})` : "";
+                        const newDocRef = doc(collection(db, "bookings"));
+                        transaction.set(newDocRef, {
+                            name: nameVal + nameSuffix,
+                            phone: phoneVal,
+                            console: consoleVal,
+                            date: dateVal,
+                            timeString: timeVal,
+                            startTime: reqStart,
+                            duration: reqDuration,
+                            endTime: reqEnd,
+                            timestamp: new Date()
+                        });
                     }
                 });
-
-                if ((MAX_CAPACITY - overlaps) < requestedSeats) {
-                    alert("Bruh, someone just sniped these seats while you were looking. Pick another time.");
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = "Confirm Booking";
-                    checkAvailability(); 
-                    return; 
-                }
-
-                for(let i = 0; i < requestedSeats; i++) {
-                    let nameSuffix = requestedSeats > 1 ? ` (Player ${i + 1})` : "";
-                    
-                    await addDoc(collection(db, "bookings"), {
-                        name: nameVal + nameSuffix,
-                        phone: phoneVal,
-                        console: consoleVal,
-                        date: dateVal,
-                        timeString: timeVal,
-                        startTime: reqStart,
-                        duration: reqDuration,
-                        endTime: reqEnd,
-                        timestamp: new Date()
-                    });
-                }
                 
                 fetch('/api/notify', {
                     method: 'POST',
@@ -400,9 +416,14 @@
                 alert(`Booking Confirmed for ${requestedSeats} player(s)!`);
                 window.location.reload(); 
             } catch (e) {
-                alert("Error securing slot. Please try again.");
+                if (e.message === "OVERBOOKED") {
+                    alert("Bruh, someone just sniped these seats while you were looking. Pick another time.");
+                } else {
+                    alert("Error securing slot. Please try again.");
+                }
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Confirm Booking";
+                checkAvailability(); 
             }
         });
     </script>
