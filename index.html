@@ -41,6 +41,10 @@
         
         .input-group { margin-bottom: 20px; text-align: left; }
         label { display: block; color: #00e5ff; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* New class for the price sub-note */
+        .price-note { font-size: 0.85rem; color: #aaa; text-transform: none; display: block; margin-top: 4px; letter-spacing: 0; font-weight: 500; }
+
         input, select {
             width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.5);
             border: 1px solid #333; color: #fff; border-radius: 4px;
@@ -96,13 +100,16 @@
             </div>
 
             <div class="input-group">
-                <label>Select Arsenal</label>
+                <label>
+                    Select Arsenal
+                    <span class="price-note">(Prices are per hour. 30 mins = half price)</span>
+                </label>
                 <select id="console-type" class="check-trigger" required>
                     <option value="" disabled selected>Select a station...</option>
-                    <option value="PC">High-End PC (2 Available)</option>
-                    <option value="PS5_42">PS5 - 42" Display (2 Available)</option>
-                    <option value="PS5_65">PS5 MAX - 65" Display (2 Available)</option>
-                    <option value="SIM">Sim Racing Rig (2 Available)</option>
+                    <option value="PC">High-End PC (2 Available) - ₹110/hr</option>
+                    <option value="PS5_42">PS5 - 42" Display (2 Available) - ₹120/hr</option>
+                    <option value="PS5_65">PS5 MAX - 65" Display (2 Available) - ₹130/hr</option>
+                    <option value="SIM">Sim Racing Rig (2 Available) - ₹150/hr</option>
                 </select>
             </div>
 
