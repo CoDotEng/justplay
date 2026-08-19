@@ -41,10 +41,6 @@
         
         .input-group { margin-bottom: 20px; text-align: left; }
         label { display: block; color: #00e5ff; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* New class for the price sub-note */
-        .price-note { font-size: 0.85rem; color: #aaa; text-transform: none; display: block; margin-top: 4px; letter-spacing: 0; font-weight: 500; }
-
         input, select {
             width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.5);
             border: 1px solid #333; color: #fff; border-radius: 4px;
@@ -62,7 +58,14 @@
         .btn-neon:hover:not(:disabled) { background: #00e5ff; color: #050505; box-shadow: 0 0 20px #00e5ff, 0 0 40px #00e5ff; }
         .btn-neon:disabled { border-color: #555; color: #555; box-shadow: none; cursor: not-allowed; }
 
-        #status-display { margin-bottom: 15px; font-size: 1.2rem; font-weight: bold; min-height: 28px; transition: 0.3s; }
+        #status-display { margin-bottom: 15px; font-size: 1.1rem; font-weight: bold; min-height: 28px; transition: 0.3s; }
+        
+        /* Bill Display Styling */
+        #bill-display {
+            background: rgba(0, 255, 0, 0.05); border: 1px dashed rgba(0, 255, 0, 0.4);
+            padding: 12px; border-radius: 4px; margin-bottom: 20px; color: #00ff00;
+            font-size: 1.2rem; font-weight: bold; font-family: 'Orbitron', sans-serif; display: none;
+        }
 
         footer { text-align: center; padding: 30px; background: #020202; color: #555; font-size: 0.9rem; margin-top: auto; border-top: 1px solid #111; }
 
@@ -100,16 +103,13 @@
             </div>
 
             <div class="input-group">
-                <label>
-                    Select Arsenal
-                    <span class="price-note">(Prices are per hour. 30 mins = half price)</span>
-                </label>
+                <label>Select Arsenal</label>
                 <select id="console-type" class="check-trigger" required>
                     <option value="" disabled selected>Select a station...</option>
-                    <option value="PC">High-End PC (2 Available) - ₹110/hr</option>
-                    <option value="PS5_42">PS5 - 42" Display (2 Available) - ₹120/hr</option>
-                    <option value="PS5_65">PS5 MAX - 65" Display (2 Available) - ₹130/hr</option>
-                    <option value="SIM">Sim Racing Rig (2 Available) - ₹150/hr</option>
+                    <option value="PC">High-End PC (₹110/hr)</option>
+                    <option value="PS5_42">PS5 - 42" Display (₹120/hr)</option>
+                    <option value="PS5_65">PS5 MAX - 65" Display (₹130/hr)</option>
+                    <option value="SIM">Sim Racing Rig (₹150/hr)</option>
                 </select>
             </div>
 
@@ -148,6 +148,9 @@
             </div>
 
             <div id="status-display"></div>
+            
+            <!-- Dynamic Expected Bill Box -->
+            <div id="bill-display">Expected Bill: ₹0 (excl. eatables)</div>
 
             <button class="btn-neon" id="submit-booking" disabled>Confirm Booking</button>
         </div>
@@ -233,14 +236,34 @@
         
         const submitBtn = document.getElementById('submit-booking');
         const statusDisplay = document.getElementById('status-display');
+        const billDisplay = document.getElementById('bill-display');
         const checkTriggers = document.querySelectorAll('.check-trigger');
         
+        // Explicit Hourly Rates mapping
+        const RATES = {
+            "PC": 110,
+            "PS5_42": 120,
+            "PS5_65": 130,
+            "SIM": 150
+        };
+
         async function checkAvailability() {
             const consoleVal = document.getElementById('console-type').value;
             const requestedSeats = parseInt(document.getElementById('booking-seats').value);
             const dateVal = document.getElementById('booking-date').value;
             const timeVal = document.getElementById('booking-time').value;
             const durationVal = document.getElementById('booking-duration').value;
+
+            // Update live bill calculation whenever triggers change
+            if (consoleVal && durationVal) {
+                const hourlyRate = RATES[consoleVal] || 100;
+                const durationHours = parseFloat(durationVal);
+                const totalBill = hourlyRate * durationHours * requestedSeats;
+                billDisplay.style.display = 'block';
+                billDisplay.innerText = `Expected Bill: ₹${totalBill} (excl. eatables)`;
+            } else {
+                billDisplay.style.display = 'none';
+            }
 
             if(!consoleVal || !dateVal || !timeVal || !durationVal) return;
 
@@ -268,8 +291,7 @@
             const available = MAX_CAPACITY - overlaps;
 
             if (available >= requestedSeats) {
-                // FIXED: Now displays the total available seats in the shop, not just what they asked for.
-                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${available} Seat(s) Open in total. Ready to lock in your ${requestedSeats}!</span>`;
+                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${available} Seat(s) Open in total.</span>`;
                 submitBtn.disabled = false;
             } else if (available > 0) {
                 statusDisplay.innerHTML = `<span style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">⚠️ Only ${available} seat(s) left. Lower your squad size.</span>`;
@@ -315,7 +337,6 @@
             const reqEnd = reqStart + reqDuration;
             
             try {
-                // FIXED: The Anti-Sniper Check. We re-query the database right before we write to it.
                 const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
                 const querySnapshot = await getDocs(q);
                 
@@ -333,11 +354,10 @@
                     alert("Bruh, someone just sniped these seats while you were looking. Pick another time.");
                     submitBtn.disabled = false;
                     submitBtn.innerText = "Confirm Booking";
-                    checkAvailability(); // Refresh the UI to show it's taken
-                    return; // Stop the booking dead in its tracks
+                    checkAvailability(); 
+                    return; 
                 }
 
-                // If the check passes, we write the data
                 for(let i = 0; i < requestedSeats; i++) {
                     let nameSuffix = requestedSeats > 1 ? ` (Player ${i + 1})` : "";
                     
