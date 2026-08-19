@@ -25,6 +25,533 @@
         
         .brand { font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px #b026ff; text-decoration: none; letter-spacing: 2px; }
         .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: #fff; text-decoration: none; font-size: 1.1rem; text-transform: uppercase; transition: 0.3s; font-weight: 600; cursor: pointer;}
+        .nav-links a:hover, .nav-links a.active { color: #00e5ff; text-shadow: 0 0 8px #00e5ff; }
+        .hamburger { display: none; font-size: 2rem; color: #00e5ff; cursor: pointer; background: none; border: none; }
+
+        .page-container { margin-top: 120px; flex-grow: 1; display: flex; flex-direction: column; align-items: center; padding: 0 20px; margin-bottom: 50px; }
+        .glow-title { text-shadow: 0 0 15px #b026ff, 0 0 30px #b026ff; font-size: 2.5rem; text-transform: uppercase; margin-bottom: 30px; text-align: center; }
+
+        .glass-panel {
+            background: rgba(15, 15, 15, 0.7); border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 40px; border-radius: 8px; width: 100%; max-width: 500px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8); text-align: center; transition: 0.3s;
+        }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; color: #00e5ff; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.5px; }
+        input, select {
+            width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333; color: #fff; border-radius: 4px;
+            font-size: 1rem; font-family: inherit; transition: 0.3s;
+        }
+        input:focus, select:focus { outline: none; border-color: #b026ff; box-shadow: 0 0 10px rgba(176, 38, 255, 0.3); }
+        select:disabled, input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-neon { 
+            background: transparent; color: #00e5ff; border: 2px solid #00e5ff; 
+            padding: 15px; width: 100%; font-size: 1.1rem; font-weight: bold; 
+            text-transform: uppercase; cursor: pointer; border-radius: 4px; 
+            box-shadow: 0 0 10px #00e5ff inset; transition: 0.3s ease-in-out; letter-spacing: 1px; margin-top: 10px;
+        }
+        .btn-neon:hover:not(:disabled) { background: #00e5ff; color: #050505; box-shadow: 0 0 20px #00e5ff, 0 0 40px #00e5ff; }
+        .btn-neon:disabled { border-color: #555; color: #555; box-shadow: none; cursor: not-allowed; }
+
+        #status-display { margin-bottom: 15px; font-size: 1.05rem; font-weight: bold; min-height: 28px; transition: 0.3s; }
+        
+        #bill-display {
+            background: rgba(0, 255, 0, 0.05); border: 1px dashed rgba(0, 255, 0, 0.4);
+            padding: 12px; border-radius: 4px; margin-bottom: 20px; color: #00ff00;
+            font-size: 1.1rem; font-weight: bold; display: none;
+        }
+
+        /* FIX 6: Modal Styles for Cancellation UI */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: #0d0d0d; border: 1px solid #b026ff; padding: 30px; border-radius: 8px;
+            width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(176, 38, 255, 0.2);
+            position: relative;
+        }
+        .modal-close { position: absolute; top: 15px; right: 20px; cursor: pointer; color: #555; font-size: 1.8rem; transition: 0.3s;}
+        .modal-close:hover { color: #ff004c; }
+        .booking-item { background: rgba(255,255,255,0.05); padding: 15px; margin-top: 15px; border-radius: 6px; border: 1px solid #333; text-align: left; display: flex; justify-content: space-between; align-items: center;}
+        .btn-cancel { background: transparent; color: #ff004c; border: 1px solid #ff004c; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s;}
+        .btn-cancel:hover { background: #ff004c; color: #fff; box-shadow: 0 0 15px #ff004c; }
+
+        footer { text-align: center; padding: 30px; background: #020202; color: #555; font-size: 0.9rem; margin-top: auto; border-top: 1px solid #111; }
+
+        @media (max-width: 768px) {
+            nav { padding: 20px; }
+            .hamburger { display: block; }
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; width: 100%; background: rgba(5, 5, 5, 0.95); border-bottom: 1px solid rgba(176, 38, 255, 0.3); padding: 20px 0; text-align: center; }
+            .nav-links.active { display: flex; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html" class="brand">JUST PLAY</a>
+        <button class="hamburger" onclick="toggleMenu()">☰</button>
+        <div class="nav-links" id="navLinks">
+            <a href="index.html" class="active">Book Slot</a>
+            <a onclick="openCancelModal()">Cancel Slot</a> <!-- FIX 6: Trigger Cancellation UI -->
+        </div>
+    </nav>
+
+    <!-- FIX 6: Cancellation Modal -->
+    <div class="modal-overlay" id="cancelModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeCancelModal()">&times;</span>
+            <h2 style="color: #00e5ff; margin-bottom: 20px; font-family: 'Orbitron', sans-serif;">Manage Bookings</h2>
+            <p style="color: #aaa; margin-bottom: 15px; font-size: 0.9rem;">Enter your number to cancel an active slot.</p>
+            <input type="tel" id="lookup-phone" placeholder="10-digit mobile number" style="margin-bottom: 15px; text-align: center;">
+            <button class="btn-neon" id="btn-lookup">Find My Slots</button>
+            <div id="lookup-results" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <div class="page-container">
+        <h1 class="glow-title">SECURE YOUR SLOT</h1>
+
+        <div class="glass-panel" id="booking-section">
+            
+            <div class="input-group">
+                <label>Full Name</label>
+                <!-- HTML max length cap -->
+                <input type="text" id="booking-name" maxlength="30" required>
+            </div>
+
+            <div class="input-group">
+                <label>Phone Number</label>
+                <input type="tel" id="booking-phone" placeholder="10-digit number" required>
+            </div>
+
+            <div class="input-group">
+                <label>Select Arsenal</label>
+                <select id="console-type" class="check-trigger" required>
+                    <option value="" disabled selected>Select a station...</option>
+                    <option value="PC">High-End PC (₹110/hr)</option>
+                    <option value="PS5_42">PS5 - 42" Display (₹120/hr)</option>
+                    <option value="PS5_65">PS5 MAX - 65" Display (₹130/hr)</option>
+                    <option value="SIM">Sim Racing Rig (₹150/hr)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Squad Size (Seats)</label>
+                <select id="booking-seats" class="check-trigger" required>
+                    <option value="1" selected>1 Player (Solo)</option>
+                    <option value="2">2 Players (Duo Matchmaking)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Date</label>
+                <input type="date" id="booking-date" class="check-trigger" required>
+            </div>
+
+            <div class="input-group">
+                <label>Arrival Time</label>
+                <select id="booking-time" class="check-trigger" disabled required>
+                    <option value="" disabled selected>Select a date first...</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Duration</label>
+                <select id="booking-duration" class="check-trigger" required>
+                    <option value="" disabled selected>How long are you playing?</option>
+                    <option value="0.5">30 Minutes</option>
+                    <option value="1">1 Hour</option>
+                    <option value="1.5">1.5 Hours</option>
+                    <option value="2">2 Hours</option>
+                    <option value="3">3 Hours</option>
+                    <option value="4">4 Hours</option>
+                    <option value="5">5+ Hours</option>
+                </select>
+            </div>
+
+            <div id="status-display"></div>
+            
+            <div id="bill-display">Expected Bill: ₹0 (excl. eatables)</div>
+
+            <button class="btn-neon" id="submit-booking" disabled>Confirm Booking</button>
+        </div>
+    </div>
+
+    <footer><p>Engineered by CODOT</p></footer>
+
+    <script>
+        function toggleMenu() { document.getElementById("navLinks").classList.toggle("active"); }
+        function openCancelModal() { document.getElementById("cancelModal").style.display = "flex"; }
+        function closeCancelModal() { document.getElementById("cancelModal").style.display = "none"; document.getElementById("lookup-results").innerHTML = ""; }
+
+        const now = new Date();
+        const todayString = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        
+        const maxDate = new Date();
+        maxDate.setDate(now.getDate() + 7);
+        const maxString = maxDate.getFullYear() + '-' + String(maxDate.getMonth() + 1).padStart(2, '0') + '-' + String(maxDate.getDate()).padStart(2, '0');
+
+        const dateInput = document.getElementById('booking-date');
+        const timeSelect = document.getElementById('booking-time');
+        
+        dateInput.setAttribute('min', todayString);
+        dateInput.setAttribute('max', maxString);
+
+        dateInput.addEventListener('change', (e) => {
+            const selectedDateString = e.target.value;
+            const selectedDate = new Date(selectedDateString);
+            const day = selectedDate.getDay();
+            
+            timeSelect.innerHTML = '<option value="" disabled selected>Select an arrival time...</option>';
+            timeSelect.disabled = false;
+            
+            let startHour = (day === 0) ? 10 : 11;
+            let startMin = (day === 0) ? 30 : 0;
+            let endHour = (day === 0) ? 21 : 20;
+            let endMin = (day === 0) ? 0 : 30;
+            
+            let curH = startHour, curM = startMin;
+            
+            const currentNow = new Date();
+            const isToday = selectedDateString === todayString;
+            const currentHour = currentNow.getHours();
+            const currentMin = currentNow.getMinutes();
+
+            let slotsAdded = 0;
+
+            while(curH < endHour || (curH === endHour && curM <= endMin)) {
+                if (isToday) {
+                    if (curH < currentHour || (curH === currentHour && curM <= currentMin)) {
+                        curM += 30; if(curM >= 60) { curM = 0; curH++; }
+                        continue;
+                    }
+                }
+
+                let ampm = curH >= 12 ? 'PM' : 'AM';
+                let dispH = curH > 12 ? curH - 12 : (curH === 0 ? 12 : curH);
+                let dispM = curM === 0 ? '00' : '30';
+                let timeStr = `${dispH}:${dispM} ${ampm}`;
+                let valStr = `${curH.toString().padStart(2, '0')}:${dispM}`;
+                
+                let option = document.createElement('option');
+                option.value = valStr; option.text = timeStr;
+                timeSelect.appendChild(option);
+                slotsAdded++;
+
+                curM += 30; if(curM >= 60) { curM = 0; curH++; }
+            }
+
+            if(slotsAdded === 0) {
+                timeSelect.innerHTML = '<option value="" disabled selected>No slots left for today.</option>';
+                timeSelect.disabled = true;
+            }
+        });
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        // Included deleteDoc for Fix 6
+        import { getFirestore, collection, query, where, getDocs, runTransaction, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCiuGG-yNq5LUSbVgDaOY3SjzcCD0ywXyI",
+            authDomain: "justplay-booking-engine.firebaseapp.com",
+            projectId: "justplay-booking-engine",
+            storageBucket: "justplay-booking-engine.firebasestorage.app",
+            messagingSenderId: "275838911544",
+            appId: "1:275838911544:web:c23d5f7054fb4f9b5592cd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        const submitBtn = document.getElementById('submit-booking');
+        const statusDisplay = document.getElementById('status-display');
+        const billDisplay = document.getElementById('bill-display');
+        const checkTriggers = document.querySelectorAll('.check-trigger');
+        
+        const RATES = {
+            "PC": 110,
+            "PS5_42": 120,
+            "PS5_65": 130,
+            "SIM": 150
+        };
+
+        // FIX 6: Handle Fetching and Deleting Bookings
+        document.getElementById('btn-lookup').addEventListener('click', async () => {
+            const phone = document.getElementById('lookup-phone').value.trim();
+            const resultsDiv = document.getElementById('lookup-results');
+            
+            if(!/^[6-9]\d{9}$/.test(phone)) { 
+                alert("Please enter a valid 10-digit mobile number."); return; 
+            }
+            
+            resultsDiv.innerHTML = "<span style='color:#00e5ff'>Searching database...</span>";
+            const todayStr = new Date().toISOString().split('T')[0];
+            
+            try {
+                const q = query(collection(db, "bookings"), where("phone", "==", phone), where("date", ">=", todayStr));
+                const snap = await getDocs(q);
+                
+                if(snap.empty) { 
+                    resultsDiv.innerHTML = "<span style='color:#aaa'>No active bookings found for this number.</span>"; 
+                    return; 
+                }
+                
+                resultsDiv.innerHTML = "";
+                snap.forEach(d => {
+                    const data = d.data();
+                    const div = document.createElement('div');
+                    div.className = "booking-item";
+                    div.innerHTML = `
+                        <div>
+                            <strong style="color: #00e5ff;">${data.console.replace('_', ' ')}</strong><br>
+                            <span style="font-size: 0.9rem; color: #ccc;">${data.date} | ${data.timeString}</span>
+                        </div>
+                        <button class="btn-cancel" data-id="${d.id}">Drop</button>
+                    `;
+                    resultsDiv.appendChild(div);
+                });
+
+                document.querySelectorAll('.btn-cancel').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        if(confirm("Are you sure you want to cancel this slot?")) {
+                            e.target.innerText = "...";
+                            await deleteDoc(doc(db, "bookings", id));
+                            alert("Slot successfully cancelled!");
+                            document.getElementById('btn-lookup').click(); // Refresh list
+                        }
+                    });
+                });
+            } catch (err) {
+                resultsDiv.innerHTML = "<span style='color:#ff0000'>Error connecting to server.</span>";
+            }
+        });
+
+        async function checkAvailability() {
+            const consoleVal = document.getElementById('console-type').value;
+            const requestedSeats = parseInt(document.getElementById('booking-seats').value);
+            const dateVal = document.getElementById('booking-date').value;
+            const timeVal = document.getElementById('booking-time').value;
+            const durationVal = document.getElementById('booking-duration').value;
+
+            if (consoleVal && durationVal) {
+                const hourlyRate = RATES[consoleVal] || 100;
+                const durationHours = parseFloat(durationVal);
+                const totalBill = hourlyRate * durationHours * requestedSeats;
+                billDisplay.style.display = 'block';
+                billDisplay.innerText = `Expected Bill: ₹${totalBill} (excl. eatables)`;
+            } else {
+                billDisplay.style.display = 'none';
+            }
+
+            if(!consoleVal || !dateVal || !timeVal || !durationVal) return;
+
+            statusDisplay.innerHTML = '<span style="color: #aaa;">Checking availability...</span>';
+            submitBtn.disabled = true;
+
+            const [hr, min] = timeVal.split(':');
+            
+            // FIX 5: Eliminate Floating Point Glitches
+            const reqStart = Math.round((parseInt(hr, 10) + (parseInt(min, 10) / 60)) * 100) / 100;
+            const reqDuration = parseFloat(durationVal);
+            const reqEnd = Math.round((reqStart + reqDuration) * 100) / 100;
+
+            const closingTime = 22.0; 
+            if (reqEnd > closingTime) {
+                statusDisplay.innerHTML = `<span style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">⚠️ Shop closes at 10:00 PM. Please reduce your playtime.</span>`;
+                submitBtn.disabled = true;
+                return;
+            }
+
+            const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
+            const querySnapshot = await getDocs(q);
+            
+            let overlaps = 0;
+            const MAX_CAPACITY = 2; 
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if(reqStart < data.endTime && reqEnd > data.startTime) {
+                    overlaps++;
+                }
+            });
+
+            const available = MAX_CAPACITY - overlaps;
+
+            if (available >= requestedSeats) {
+                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${available} Seat(s) Open in total.</span>`;
+                submitBtn.disabled = false;
+            } else if (available > 0) {
+                statusDisplay.innerHTML = `<span style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">⚠️ Only ${available} seat(s) left. Lower your squad size.</span>`;
+                submitBtn.disabled = true;
+            } else {
+                statusDisplay.innerHTML = `<span style="color: #ff0000; text-shadow: 0 0 10px #ff0000;">🔴 Fully Booked for this exact time</span>`;
+                submitBtn.disabled = true;
+            }
+        }
+
+        checkTriggers.forEach(trigger => trigger.addEventListener('change', checkAvailability));
+
+        submitBtn.addEventListener('click', async () => {
+            let nameVal = document.getElementById('booking-name').value.trim();
+            const phoneVal = document.getElementById('booking-phone').value.trim();
+            const requestedSeats = parseInt(document.getElementById('booking-seats').value);
+            const consoleVal = document.getElementById('console-type').value;
+            const dateVal = document.getElementById('booking-date').value;
+            const timeVal = document.getElementById('booking-time').value;
+            const durationVal = document.getElementById('booking-duration').value;
+            
+            if(!nameVal) { alert("Please enter your full name."); return; }
+            
+            // FIX 2: XSS Trojan Horse Sanitize (Removes script tags)
+            nameVal = nameVal.replace(/[<>]/g, "");
+            
+            if (nameVal.length > 30) {
+                alert("Name is too long. Keep it under 30 characters."); return;
+            }
+
+            // FIX 3: 500-Player Squad Block
+            if (requestedSeats < 1 || requestedSeats > 2) {
+                alert("Nice try, hacker. Max 2 seats."); return;
+            }
+            
+            const phoneRegex = /^[6-9]\d{9}$/;
+            if(!phoneRegex.test(phoneVal)) { 
+                alert("Please enter a valid 10-digit Indian mobile number."); return; 
+            }
+            
+            if(!consoleVal || !dateVal || !timeVal || !durationVal) { alert("Please fill out all booking details."); return; }
+            
+            const [hr, min] = timeVal.split(':');
+            
+            // FIX 5: Floating Point Perfect Math
+            const reqStart = Math.round((parseInt(hr, 10) + (parseInt(min, 10) / 60)) * 100) / 100;
+            const reqDuration = parseFloat(durationVal);
+            const reqEnd = Math.round((reqStart + reqDuration) * 100) / 100;
+            
+            const realNow = new Date();
+            const todayStr = realNow.getFullYear() + '-' + String(realNow.getMonth() + 1).padStart(2, '0') + '-' + String(realNow.getDate()).padStart(2, '0');
+            const currentDecimalTime = realNow.getHours() + (realNow.getMinutes() / 60);
+            
+            if (dateVal === todayStr && reqStart <= currentDecimalTime) {
+                alert("You cannot book a time in the past! Please select a future time."); return;
+            }
+
+            const closingTime = 22.0; 
+            if (reqEnd > closingTime) {
+                alert("Nice try, but the shop closes at 10 PM. Reduce your duration."); return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Securing Slot(s)...";
+            
+            try {
+                // FIX 4: The Ghost Town Anti-Spam (Check if user has > 3 active bookings)
+                const userQ = query(collection(db, "bookings"), where("phone", "==", phoneVal), where("date", ">=", todayStr));
+                const userSnap = await getDocs(userQ);
+                if (userSnap.size >= 3) {
+                    alert("You have reached the limit of 3 active bookings. Please cancel one or visit the shop to play!");
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Confirm Booking";
+                    return;
+                }
+
+                await runTransaction(db, async (transaction) => {
+                    const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
+                    const querySnapshot = await getDocs(q); 
+                    
+                    let overlaps = 0;
+                    const MAX_CAPACITY = 2; 
+
+                    querySnapshot.forEach((d) => {
+                        const data = d.data();
+                        if(reqStart < data.endTime && reqEnd > data.startTime) {
+                            overlaps++;
+                        }
+                    });
+
+                    if ((MAX_CAPACITY - overlaps) < requestedSeats) {
+                        throw new Error("OVERBOOKED");
+                    }
+
+                    for(let i = 0; i < requestedSeats; i++) {
+                        let nameSuffix = requestedSeats > 1 ? ` (Player ${i + 1})` : "";
+                        const newDocRef = doc(collection(db, "bookings"));
+                        transaction.set(newDocRef, {
+                            name: nameVal + nameSuffix,
+                            phone: phoneVal,
+                            console: consoleVal,
+                            date: dateVal,
+                            timeString: timeVal,
+                            startTime: reqStart,
+                            duration: reqDuration,
+                            endTime: reqEnd,
+                            timestamp: new Date()
+                        });
+                    }
+                });
+                
+                fetch('/api/notify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: nameVal,
+                        consoleType: consoleVal,
+                        timeString: timeVal
+                    })
+                }).catch(err => {});
+                
+                alert(`Booking Confirmed for ${requestedSeats} player(s)!`);
+                window.location.reload(); 
+            } catch (e) {
+                if (e.message === "OVERBOOKED") {
+                    alert("someone else booked these seats while you were looking. Pick another time.");
+                } else {
+                    alert("Error securing slot. Please try again.");
+                }
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Confirm Booking";
+                checkAvailability(); 
+            }
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Play | Book A Slot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            background-color: #050505; color: #ffffff; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-image: radial-gradient(circle at top, #1a0b2e 0%, #050505 100%);
+            min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column;
+        }
+
+        h1, h2, h3, .brand { font-weight: 700; letter-spacing: 1px; }
+        
+        nav { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 20px 50px; background: rgba(5, 5, 5, 0.8); 
+            backdrop-filter: blur(10px); border-bottom: 1px solid rgba(176, 38, 255, 0.3); 
+            position: fixed; width: 100%; top: 0; z-index: 100; 
+        }
+        
+        .brand { font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px #b026ff; text-decoration: none; letter-spacing: 2px; }
+        .nav-links { display: flex; gap: 30px; }
         .nav-links a { color: #fff; text-decoration: none; font-size: 1.1rem; text-transform: uppercase; transition: 0.3s; font-weight: 600; }
         .nav-links a:hover, .nav-links a.active { color: #00e5ff; text-shadow: 0 0 8px #00e5ff; }
         .hamburger { display: none; font-size: 2rem; color: #00e5ff; cursor: pointer; background: none; border: none; }
