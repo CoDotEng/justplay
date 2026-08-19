@@ -238,7 +238,6 @@
         const billDisplay = document.getElementById('bill-display');
         const checkTriggers = document.querySelectorAll('.check-trigger');
         
-        // Explicit Hourly Rates mapping
         const RATES = {
             "PC": 110,
             "PS5_42": 120,
@@ -253,7 +252,6 @@
             const timeVal = document.getElementById('booking-time').value;
             const durationVal = document.getElementById('booking-duration').value;
 
-            // Update live bill calculation whenever triggers change
             if (consoleVal && durationVal) {
                 const hourlyRate = RATES[consoleVal] || 100;
                 const durationHours = parseFloat(durationVal);
@@ -274,6 +272,15 @@
             const reqDuration = parseFloat(durationVal);
             const reqEnd = reqStart + reqDuration;
 
+            // --- THE LOOPHOLE FIX ---
+            // If he wants to change closing time later, just change 22 (10:00 PM) to 22.5 (10:30 PM) or 23 (11:00 PM)
+            const closingTime = 22.0; 
+            if (reqEnd > closingTime) {
+                statusDisplay.innerHTML = `<span style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">⚠️ Shop closes at 10:00 PM. Please reduce your playtime.</span>`;
+                submitBtn.disabled = true;
+                return;
+            }
+
             const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
             const querySnapshot = await getDocs(q);
             
@@ -290,7 +297,7 @@
             const available = MAX_CAPACITY - overlaps;
 
             if (available >= requestedSeats) {
-                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${available} Seat(s) Open in total. Ready to lock in your ${requestedSeats}!</span>`;
+                statusDisplay.innerHTML = `<span style="color: #00ff00; text-shadow: 0 0 10px #00ff00;">🟢 ${available} Seat(s) Open in total.</span>`;
                 submitBtn.disabled = false;
             } else if (available > 0) {
                 statusDisplay.innerHTML = `<span style="color: #ffaa00; text-shadow: 0 0 10px #ffaa00;">⚠️ Only ${available} seat(s) left. Lower your squad size.</span>`;
@@ -312,28 +319,24 @@
             const timeVal = document.getElementById('booking-time').value;
             const durationVal = document.getElementById('booking-duration').value;
             
-            if(!nameVal) {
-                alert("Please enter your full name.");
-                return;
-            }
-
-            if(phoneVal.length < 10) {
-                alert("Please enter a valid 10-digit phone number.");
-                return;
-            }
-
-            if(!consoleVal || !dateVal || !timeVal || !durationVal) {
-                alert("Please fill out all booking details.");
-                return;
-            }
-            
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Securing Slot(s)...";
+            if(!nameVal) { alert("Please enter your full name."); return; }
+            if(phoneVal.length < 10) { alert("Please enter a valid 10-digit phone number."); return; }
+            if(!consoleVal || !dateVal || !timeVal || !durationVal) { alert("Please fill out all booking details."); return; }
             
             const [hr, min] = timeVal.split(':');
             const reqStart = parseInt(hr, 10) + (parseInt(min, 10) / 60);
             const reqDuration = parseFloat(durationVal);
             const reqEnd = reqStart + reqDuration;
+            
+            // Hacker Check Backend (Just in case they bypassed the UI)
+            const closingTime = 22.0; 
+            if (reqEnd > closingTime) {
+                alert("Nice try, but the shop closes at 10 PM. Reduce your duration.");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Securing Slot(s)...";
             
             try {
                 const q = query(collection(db, "bookings"), where("date", "==", dateVal), where("console", "==", consoleVal));
